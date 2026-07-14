@@ -1,0 +1,191 @@
+<div class="page">
+  <div class="page-head">
+    <div>
+      <h1>Spazi disponibili</h1>
+      <p>Scegli uno spazio, verifica le fasce disponibili e crea la tua prenotazione.</p>
+    </div>
+  </div>
+
+  <div *ngIf="message" class="card card-pad">{{ message }}</div>
+  <div *ngIf="isLoading" class="card card-pad">Caricamento spazi...</div>
+
+  <section class="spaces-grid" *ngIf="!isLoading">
+    <mat-card *ngFor="let space of spaces" class="space-card" [class.selected]="selectedSpace?._id === space._id">
+      <mat-card-content>
+        <div class="space-head">
+          <div>
+            <h2>{{ space.name }}</h2>
+            <p>{{ space.description || 'Spazio configurato per prenotazioni gestore.' }}</p>
+          </div>
+          <span class="space-type">
+            <i [class]="space.rentalUnit === 'workstation' ? 'ri-team-line' : 'ri-door-open-line'"></i>
+            {{ space.rentalUnit === 'workstation' ? 'Postazioni' : 'Stanza intera' }}
+          </span>
+        </div>
+
+        <div class="price-row">
+          <span *ngIf="space.rentalModes.includes('time')">
+            <i class="ri-time-line"></i>
+            Frazione {{ formatCurrency(space.hourlyRate) }} / {{ space.timeSlotMinutes || 60 }} min
+          </span>
+          <span *ngIf="space.rentalModes.includes('full_day')">
+            <i class="ri-calendar-line"></i>
+            Giornata {{ formatCurrency(space.dailyRate) }}
+          </span>
+        </div>
+
+        <button
+          mat-button
+          class="select-button"
+          [class.action-filter]="selectedSpace?._id !== space._id"
+          [class.action-primary]="selectedSpace?._id === space._id"
+          (click)="selectSpace(space)">
+          <i [class]="selectedSpace?._id === space._id ? 'ri-check-line' : 'ri-arrow-right-line'"></i>
+          <span>{{ selectedSpace?._id === space._id ? 'Selezionato' : 'Seleziona' }}</span>
+        </button>
+      </mat-card-content>
+    </mat-card>
+  </section>
+
+  <section *ngIf="selectedSpace" class="card card-pad booking-panel">
+    <div class="section-title">
+      <h2>Prenota {{ selectedSpace.name }}</h2>
+      <span class="muted">{{ selectedSpace.rentalModes.join(' / ') }}</span>
+    </div>
+
+    <div class="booking-layout">
+      <div class="calendar-panel">
+        <div class="calendar-title">
+          <i class="ri-calendar-line"></i>
+          <span>Seleziona giorno</span>
+        </div>
+        <mat-calendar
+          [selected]="form.value.date"
+          [minDate]="minDate"
+          (selectedChange)="selectCalendarDate($event)">
+        </mat-calendar>
+      </div>
+
+      <div class="booking-form-area">
+        <form [formGroup]="form" class="form-grid">
+          <mat-form-field appearance="outline" class="full">
+            <mat-label>Nome prenotazione</mat-label>
+            <input matInput formControlName="name">
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Data</mat-label>
+            <input matInput [matDatepicker]="bookingDatePicker" formControlName="date" (dateChange)="loadAvailability()">
+            <mat-datepicker-toggle matSuffix [for]="bookingDatePicker">
+              <i class="ri-calendar-line" matDatepickerToggleIcon></i>
+            </mat-datepicker-toggle>
+            <mat-datepicker #bookingDatePicker></mat-datepicker>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Modalita</mat-label>
+            <mat-select formControlName="rentalMode" (selectionChange)="loadAvailability()">
+              <mat-option *ngFor="let mode of selectedSpace.rentalModes" [value]="mode">
+                {{ mode === 'time' ? 'A frazioni' : 'Tutta la giornata' }}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" *ngIf="selectedSpace.rentalUnit === 'workstation'">
+            <mat-label>Postazioni</mat-label>
+            <input matInput type="number" min="1" formControlName="workstationQuantity" (change)="loadAvailability()">
+          </mat-form-field>
+        </form>
+
+        <div class="slots" *ngIf="availableSlots.length">
+          <button
+            mat-button
+            *ngFor="let slot of availableSlots"
+            [class.action-primary]="slot.available && form.value.startTime === slot.startTime"
+            [class.action-filter]="slot.available && form.value.startTime !== slot.startTime"
+            [class.action-cancel]="!slot.available"
+            [disabled]="!slot.available"
+            (click)="pickSlot(slot)">
+            {{ slot.startTime }} - {{ slot.endTime }} - {{ formatCurrency(slot.amount) }}
+          </button>
+        </div>
+
+        <div class="empty-slots loading" *ngIf="isLoadingAvailability">
+          Caricamento fasce disponibili...
+        </div>
+
+        <div class="empty-slots" *ngIf="availabilityLoaded && !isLoadingAvailability && !selectedDayIsOpen">
+          Lo spazio e chiuso nel giorno selezionato.
+        </div>
+
+        <div class="empty-slots" *ngIf="availabilityLoaded && !isLoadingAvailability && selectedDayIsOpen && form.value.date && !availableSlots.length">
+          Nessuna fascia disponibile per il giorno selezionato.
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="booking-modal-backdrop" *ngIf="isBookingModalOpen" (click)="closeBookingModal()">
+    <div class="booking-modal" (click)="$event.stopPropagation()">
+      <div class="modal-head">
+        <div>
+          <span>{{ confirmedBooking ? 'Pagamento' : 'Conferma prenotazione' }}</span>
+          <h2>{{ selectedSpace?.name }}</h2>
+        </div>
+        <button mat-button class="action-cancel icon-button" type="button" (click)="closeBookingModal()" [disabled]="isSaving || !!checkoutProvider || isSimulatingPayment">
+          <i class="ri-close-line"></i>
+        </button>
+      </div>
+
+      <div class="modal-summary">
+        <div>
+          <span>Giorno</span>
+          <strong>{{ formatDisplayDate(form.value.date) }}</strong>
+        </div>
+        <div>
+          <span>Orario</span>
+          <strong>{{ form.value.startTime }} - {{ form.value.endTime }}</strong>
+        </div>
+        <div>
+          <span>Importo</span>
+          <strong>{{ formatCurrency(selectedSlotAmount()) }}</strong>
+        </div>
+      </div>
+
+      <div class="modal-message" *ngIf="message">{{ message }}</div>
+
+      <div class="modal-actions" *ngIf="!confirmedBooking">
+        <button mat-button class="action-cancel" type="button" (click)="closeBookingModal()" [disabled]="isSaving">
+          <i class="ri-arrow-go-back-line"></i>
+          <span>Annulla</span>
+        </button>
+        <button mat-button class="action-primary" type="button" (click)="createBooking()" [disabled]="isSaving">
+          <i class="ri-check-line"></i>
+          <span>{{ isSaving ? 'Conferma...' : 'Conferma prenotazione' }}</span>
+        </button>
+      </div>
+
+      <div class="modal-payment" *ngIf="confirmedBooking">
+        <p>Completa il pagamento per finalizzare l'acquisto.</p>
+        <div class="payment-actions">
+          <button mat-button class="simulate-payment-button" type="button" (click)="simulatePayment()" [disabled]="!!checkoutProvider || isSimulatingPayment">
+            <i class="ri-flask-line"></i>
+            <span>{{ isSimulatingPayment ? 'Simulazione...' : 'Simula pagamento' }}</span>
+          </button>
+          <button mat-button class="action-primary" type="button" (click)="startCheckout('stripe')" [disabled]="!!checkoutProvider || isSimulatingPayment">
+            <i class="ri-bank-card-line"></i>
+            <span>{{ checkoutProvider === 'stripe' ? 'Apertura...' : 'Stripe' }}</span>
+          </button>
+          <button mat-button class="action-primary" type="button" (click)="startCheckout('paypal')" [disabled]="!!checkoutProvider || isSimulatingPayment">
+            <i class="ri-paypal-line"></i>
+            <span>{{ checkoutProvider === 'paypal' ? 'Apertura...' : 'PayPal' }}</span>
+          </button>
+          <button mat-button class="action-primary" type="button" (click)="startCheckout('nexi')" [disabled]="!!checkoutProvider || isSimulatingPayment">
+            <i class="ri-secure-payment-line"></i>
+            <span>{{ checkoutProvider === 'nexi' ? 'Apertura...' : 'Nexi' }}</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

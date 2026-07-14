@@ -1,0 +1,138 @@
+.sign-in-area {
+  min-height: 100vh;
+  overflow-x: hidden;
+  padding: 30px 12.5px;
+  background: var(--app-bg);
+
+  .trinta-form {
+    width: 100%;
+    max-width: 520px;
+    padding: 35px 30px;
+    border: 1px solid var(--ui-border);
+    border-radius: 8px;
+    background: var(--ui-surface);
+    box-shadow: 0 14px 36px var(--ui-shadow-soft);
+  }
+}
+
+.login-head {
+  display: grid;
+  gap: 7px;
+  margin-bottom: 24px;
+  text-align: center;
+
+  span {
+    color: var(--primaryColor);
+    font-size: 13px;
+    font-weight: 500;
+    text-transform: uppercase;
+  }
+
+  h3 {
+    margin: 0;
+    color: var(--darkColor);
+    font-family: var(--headingFontFamily);
+    font-size: 18px;
+    font-weight: 500;
+    letter-spacing: 0.18px;
+  }
+
+  p {
+    margin: 0;
+    color: var(--bodyColor);
+    line-height: 1.65;
+  }
+}
+
+.login-form {
+  display: grid;
+  gap: 16px;
+}
+
+.form-group {
+  display: grid;
+  gap: 10px;
+
+  .label {
+    color: var(--blackColor);
+    font-size: 14px;
+  }
+
+  .mat-mdc-form-field {
+    display: block;
+    width: 100%;
+  }
+}
+
+.login-error,
+.login-success {
+  padding: 12px 14px;
+  border-radius: 6px;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.login-error {
+  background: var(--action-delete-bg-soft);
+  color: var(--action-delete-text-strong);
+}
+
+.login-success {
+  background: var(--action-save-bg);
+  color: var(--action-save-text);
+}
+
+.link-button {
+  color: var(--action-filter-text) !important;
+  background: transparent !important;
+}
+
+::ng-deep .sign-in-area .trinta-form form {
+  .mat-mdc-button {
+    width: 100%;
+    height: auto;
+    min-width: auto;
+    margin-top: 8px;
+    padding: 16px 25px;
+    font-family: var(--headingFontFamily);
+    font-size: 15px;
+    font-weight: 500;
+  }
+
+  .mat-mdc-form-field-focus-overlay,
+  .mdc-line-ripple {
+    display: none;
+  }
+
+  .mdc-text-field--filled:not(.mdc-text-field--disabled) {
+    background-color: var(--app-bg);
+  }
+
+  .mat-mdc-text-field-wrapper {
+    padding: 0 15px 0 58px;
+    border: 1px solid var(--app-bg);
+    border-radius: 10px !important;
+    background-color: var(--app-bg) !important;
+  }
+
+  .field-icon {
+    position: absolute;
+    top: 15px;
+    left: -42px;
+    z-index: 1;
+    color: var(--blackColor);
+    font-size: 22px;
+    line-height: 1;
+  }
+}
+
+@media (max-width: 767px) {
+  .sign-in-area {
+    padding: 20px 12px;
+
+    .trinta-form {
+      max-width: 100%;
+      padding: 30px 20px;
+    }
+  }
+}

@@ -1,0 +1,257 @@
+<div class="page">
+  <div class="page-head">
+    <div>
+      <h1>Corsi</h1>
+      <p>Crea corsi sulle prenotazioni pagate e gestisci gli iscritti.</p>
+    </div>
+  </div>
+
+  <div *ngIf="message" class="card card-pad course-alert">{{ message }}</div>
+  <div *ngIf="isLoading" class="card card-pad">Caricamento corsi...</div>
+
+  <section class="courses-layout" *ngIf="!isLoading">
+    <div class="card card-pad">
+      <div class="section-title">
+        <h2>Prenotazioni pagate disponibili</h2>
+      </div>
+      <div class="mini-list">
+        <button
+          mat-button
+          class="booking-pick action-filter"
+          *ngFor="let booking of paidBookings"
+          [class.booking-used]="hasCourseForBooking(booking._id)"
+          [disabled]="hasCourseForBooking(booking._id)"
+          (click)="useBooking(booking)">
+          <i class="ri-calendar-check-line"></i>
+          <span>
+            {{ bookingName(booking) }}
+            <small *ngIf="hasCourseForBooking(booking._id)">Corso gia creato</small>
+          </span>
+        </button>
+      </div>
+    </div>
+
+    <div class="card card-pad">
+      <div class="section-title">
+        <h2>{{ courseForm.value.id ? 'Modifica corso' : 'Nuovo corso' }}</h2>
+      </div>
+      <form [formGroup]="courseForm" class="course-form">
+        <div class="course-form-error" *ngIf="courseFormError" role="alert">
+          <i class="ri-error-warning-line"></i>
+          <span>{{ courseFormError }}</span>
+        </div>
+
+        <section class="course-form-section">
+          <div class="form-section-title">
+            <i class="ri-calendar-check-line"></i>
+            <h3>Prenotazione spazio</h3>
+          </div>
+          <div class="form-grid">
+            <mat-form-field appearance="outline" class="full">
+              <mat-label>Prenotazione</mat-label>
+              <mat-select formControlName="booking" (selectionChange)="syncBookingDetails($event.value)">
+                <mat-option
+                  *ngFor="let booking of paidBookings"
+                  [value]="booking._id"
+                  [disabled]="isBookingDisabledForForm(booking._id)">
+                  {{ bookingName(booking) }}{{ isBookingDisabledForForm(booking._id) ? ' - corso gia creato' : '' }}
+                </mat-option>
+              </mat-select>
+              <mat-error *ngIf="courseForm.controls.booking.touched && courseForm.controls.booking.invalid">
+                Seleziona una prenotazione pagata.
+              </mat-error>
+            </mat-form-field>
+            <mat-form-field appearance="outline" class="locked-field">
+              <mat-label>Data</mat-label>
+              <input matInput [value]="formatOptionalDate(courseForm.getRawValue().date)" disabled>
+              <i class="ri-lock-line locked-icon" matSuffix></i>
+            </mat-form-field>
+            <mat-form-field appearance="outline" class="locked-field">
+              <mat-label>Inizio</mat-label>
+              <input matInput [value]="courseForm.getRawValue().startTime" disabled>
+              <i class="ri-lock-line locked-icon" matSuffix></i>
+            </mat-form-field>
+            <mat-form-field appearance="outline" class="locked-field">
+              <mat-label>Fine</mat-label>
+              <input matInput [value]="courseForm.getRawValue().endTime" disabled>
+              <i class="ri-lock-line locked-icon" matSuffix></i>
+            </mat-form-field>
+          </div>
+        </section>
+
+        <section class="course-form-section">
+          <div class="form-section-title">
+            <i class="ri-book-open-line"></i>
+            <h3>Dati corso</h3>
+          </div>
+          <div class="form-grid">
+            <mat-form-field appearance="outline" class="full">
+              <mat-label>Titolo corso</mat-label>
+              <input matInput formControlName="title">
+              <mat-error *ngIf="courseForm.controls.title.touched && courseForm.controls.title.invalid">
+                Il titolo del corso e obbligatorio.
+              </mat-error>
+            </mat-form-field>
+            <mat-form-field appearance="outline" class="full">
+              <mat-label>Descrizione</mat-label>
+              <textarea matInput rows="3" formControlName="description"></textarea>
+            </mat-form-field>
+            <mat-form-field appearance="outline">
+              <mat-label>Capienza</mat-label>
+              <input matInput type="number" formControlName="capacity">
+              <mat-error *ngIf="courseForm.controls.capacity.touched && courseForm.controls.capacity.invalid">
+                Inserisci almeno 1 posto.
+              </mat-error>
+            </mat-form-field>
+          </div>
+        </section>
+
+        <section class="course-form-section">
+          <div class="form-section-title">
+            <i class="ri-ticket-line"></i>
+            <h3>Iscrizioni</h3>
+          </div>
+          <div class="form-grid">
+            <mat-form-field appearance="outline">
+              <mat-label>Iscrizione</mat-label>
+              <mat-select formControlName="enrollmentType">
+                <mat-option value="free">Gratuita</mat-option>
+                <mat-option value="paid">A pagamento</mat-option>
+              </mat-select>
+              <mat-error *ngIf="courseForm.controls.enrollmentType.touched && courseForm.controls.enrollmentType.invalid">
+                Seleziona il tipo di iscrizione.
+              </mat-error>
+            </mat-form-field>
+            <mat-form-field appearance="outline" *ngIf="courseForm.value.enrollmentType === 'paid'">
+              <mat-label>Prezzo</mat-label>
+              <input matInput type="number" formControlName="price">
+              <mat-error *ngIf="isPaidPriceInvalid()">
+                Inserisci un prezzo maggiore di zero.
+              </mat-error>
+            </mat-form-field>
+          </div>
+        </section>
+      </form>
+      <div class="actions">
+        <button mat-button class="action-primary" (click)="saveCourse()">
+          <i class="ri-save-3-line"></i>
+          <span>Salva</span>
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <section class="card card-pad created-courses" *ngIf="!isLoading">
+    <div class="section-title">
+      <h2>Corsi creati</h2>
+    </div>
+
+    <div class="empty-courses" *ngIf="!courses.length">
+      <i class="ri-book-open-line"></i>
+      <strong>Nessun corso creato</strong>
+      <span>Seleziona una prenotazione pagata e salva il primo corso.</span>
+    </div>
+
+    <div class="course-list" *ngIf="courses.length">
+      <mat-card *ngFor="let course of courses" class="course-card">
+        <mat-card-content>
+          <div class="course-main">
+            <div>
+              <h2>{{ course.title }}</h2>
+              <p>{{ courseSpace(course) }} - {{ formatDate(course.date) }} - {{ course.startTime }} / {{ course.endTime }}</p>
+            </div>
+            <span class="pill" [class]="course.enrollmentType === 'free' ? 'FREE' : 'pending'">
+              {{ course.enrollmentType === 'free' ? 'Gratuito' : formatCurrency(course.price) }}
+            </span>
+          </div>
+          <div class="actions">
+            <button mat-button class="action-filter" (click)="editCourse(course)">
+              <i class="ri-edit-line"></i>
+              <span>Modifica / iscritti</span>
+            </button>
+            <button mat-button class="action-delete" (click)="askDeleteCourse(course)">
+              <i class="ri-delete-bin-line"></i>
+              <span>Elimina</span>
+            </button>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+  </section>
+
+  <section *ngIf="selectedCourse" class="card card-pad subscribers">
+    <div class="section-title">
+      <h2>Iscritti a {{ selectedCourse.title }}</h2>
+    </div>
+
+    <form [formGroup]="subscriberForm" class="subscriber-form">
+      <mat-form-field appearance="outline">
+        <mat-label>Cerca cliente</mat-label>
+        <input matInput formControlName="search" (input)="searchClients()">
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>Cliente trovato</mat-label>
+        <mat-select formControlName="userId">
+          <mat-option value="">Nessuno</mat-option>
+          <mat-option *ngFor="let client of clients" [value]="client._id">{{ client.name }} - {{ client.email }}</mat-option>
+        </mat-select>
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>Nuovo nome</mat-label>
+        <input matInput formControlName="name">
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>Nuova email</mat-label>
+        <input matInput formControlName="email">
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>Telefono</mat-label>
+        <input matInput formControlName="phone">
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>Codice fiscale</mat-label>
+        <input matInput formControlName="taxCode">
+      </mat-form-field>
+      <button mat-button class="action-primary" type="button" (click)="addSubscriber()">
+        <i class="ri-user-add-line"></i>
+        <span>Aggiungi iscritto</span>
+      </button>
+    </form>
+
+    <div class="subscriber-list">
+      <div *ngFor="let item of subscribers" class="subscriber-row">
+        <div>
+          <strong>{{ userName(item) }}</strong>
+          <span>{{ userEmail(item) }}</span>
+        </div>
+        <span class="pill" [class]="item.paymentStatus">{{ item.paymentStatus }}</span>
+        <button mat-button class="action-delete" (click)="askRemoveSubscriber(item)">
+          <i class="ri-delete-bin-line"></i>
+          <span>Elimina</span>
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <div class="confirm-backdrop" *ngIf="pendingDelete" (click)="cancelDelete()">
+    <div class="confirm-dialog" (click)="$event.stopPropagation()">
+      <div class="confirm-icon">
+        <i class="ri-delete-bin-line"></i>
+      </div>
+      <div>
+        <h2>{{ pendingDeleteTitle() }}</h2>
+        <p>{{ pendingDeleteMessage() }}</p>
+      </div>
+      <div class="confirm-actions">
+        <button mat-button class="action-cancel" type="button" (click)="cancelDelete()">
+          <i class="ri-close-line"></i>
+          <span>Annulla</span>
+        </button>
+        <button mat-button class="action-delete" type="button" (click)="confirmDelete()">
+          <i class="ri-delete-bin-line"></i>
+          <span>Elimina</span>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

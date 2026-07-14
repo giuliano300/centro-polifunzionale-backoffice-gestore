@@ -1,0 +1,115 @@
+<div class="page">
+  <div class="page-head">
+    <div>
+      <h1>Le mie prenotazioni</h1>
+      <p>Controlla gli spazi acquistati e completa i pagamenti.</p>
+    </div>
+  </div>
+
+  <div class="card card-pad">
+    <form [formGroup]="filters" class="filters">
+      <mat-form-field appearance="outline">
+        <mat-label>Dal</mat-label>
+        <input matInput [matDatepicker]="bookingStartPicker" formControlName="start">
+        <mat-datepicker-toggle matSuffix [for]="bookingStartPicker">
+          <i class="ri-calendar-line" matDatepickerToggleIcon></i>
+        </mat-datepicker-toggle>
+        <mat-datepicker #bookingStartPicker></mat-datepicker>
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>Al</mat-label>
+        <input matInput [matDatepicker]="bookingEndPicker" formControlName="end">
+        <mat-datepicker-toggle matSuffix [for]="bookingEndPicker">
+          <i class="ri-calendar-line" matDatepickerToggleIcon></i>
+        </mat-datepicker-toggle>
+        <mat-datepicker #bookingEndPicker></mat-datepicker>
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>Stato</mat-label>
+        <mat-select formControlName="status">
+          <mat-option value="">Tutti</mat-option>
+          <mat-option value="pending">In attesa</mat-option>
+          <mat-option value="confirmed">Confermata</mat-option>
+          <mat-option value="cancelled">Annullata</mat-option>
+        </mat-select>
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>Cerca</mat-label>
+        <input matInput formControlName="search">
+      </mat-form-field>
+      <button mat-button class="action-filter" type="button" (click)="load()">
+        <i class="ri-filter-3-line"></i>
+        <span>Filtra</span>
+      </button>
+      <button mat-button class="action-cancel" type="button" (click)="clear()">
+        <i class="ri-close-line"></i>
+        <span>Annulla</span>
+      </button>
+    </form>
+  </div>
+
+  <div *ngIf="message" class="card card-pad">{{ message }}</div>
+  <div *ngIf="isLoading" class="card card-pad">Caricamento prenotazioni...</div>
+
+  <div class="empty-bookings card card-pad" *ngIf="!isLoading && !bookings.length">
+    <i class="ri-calendar-check-line"></i>
+    <strong>Nessuna prenotazione</strong>
+    <span>Non ci sono prenotazioni con i filtri selezionati.</span>
+  </div>
+
+  <div class="booking-list" *ngIf="!isLoading && bookings.length">
+    <mat-card *ngFor="let item of bookings" class="booking-card">
+      <mat-card-content>
+        <div class="booking-main">
+          <div>
+            <h2>{{ item.booking.name }}</h2>
+            <p>{{ spaceName(item.booking) }} - {{ formatDate(item.booking.date) }} - {{ item.booking.startTime }} / {{ item.booking.endTime }}</p>
+          </div>
+          <div class="booking-status">
+            <span class="pill" [class]="item.booking.status">{{ item.booking.status }}</span>
+            <span class="pill" [class]="paymentStatus(item)">{{ paymentStatus(item) }}</span>
+          </div>
+        </div>
+
+        <div class="booking-foot">
+          <span>{{ item.booking.rentalMode === 'full_day' ? 'Tutta la giornata' : 'A frazioni' }}</span>
+          <strong>{{ formatCurrency(paymentAmount(item)) }}</strong>
+          <div *ngIf="isPayable(item)" class="payment-actions">
+            <button
+              mat-button
+              class="simulate-payment-button"
+              [disabled]="payingBookingId === item.booking._id"
+              (click)="markPaid(item)">
+              <i class="ri-flask-line"></i>
+              <span>{{ payingBookingId === item.booking._id && !checkoutProvider ? 'Simulazione...' : 'Simula pagamento' }}</span>
+            </button>
+            <button
+              mat-button
+              class="action-primary"
+              [disabled]="payingBookingId === item.booking._id"
+              (click)="startCheckout(item, 'stripe')">
+              <i class="ri-bank-card-line"></i>
+              <span>{{ payingBookingId === item.booking._id && checkoutProvider === 'stripe' ? 'Apertura...' : 'Stripe' }}</span>
+            </button>
+            <button
+              mat-button
+              class="action-filter"
+              [disabled]="payingBookingId === item.booking._id"
+              (click)="startCheckout(item, 'paypal')">
+              <i class="ri-paypal-line"></i>
+              <span>{{ payingBookingId === item.booking._id && checkoutProvider === 'paypal' ? 'Apertura...' : 'PayPal' }}</span>
+            </button>
+            <button
+              mat-button
+              class="action-filter"
+              [disabled]="payingBookingId === item.booking._id"
+              (click)="startCheckout(item, 'nexi')">
+              <i class="ri-secure-payment-line"></i>
+              <span>{{ payingBookingId === item.booking._id && checkoutProvider === 'nexi' ? 'Apertura...' : 'Nexi' }}</span>
+            </button>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+</div>

@@ -1,0 +1,75 @@
+<div class="page">
+  <div class="page-head">
+    <div>
+      <h1>Dashboard gestore</h1>
+      <p>Panoramica dei tuoi spazi acquistati, corsi e pagamenti.</p>
+    </div>
+    <a mat-button routerLink="/spaces" class="action-primary">
+      <i class="ri-add-line"></i>
+      <span>Nuova prenotazione</span>
+    </a>
+  </div>
+
+  <div *ngIf="isLoading" class="card card-pad">Caricamento...</div>
+
+  <ng-container *ngIf="!isLoading">
+    <section class="kpi-grid">
+      <a routerLink="/bookings" class="kpi card card-pad">
+        <span class="kpi-icon blue"><i class="ri-calendar-check-line"></i></span>
+        <span class="kpi-tag">Prenotazioni</span>
+        <strong>{{ bookings.length }}</strong>
+        <small>{{ upcomingBookings.length }} prossime</small>
+      </a>
+      <a routerLink="/courses" class="kpi card card-pad">
+        <span class="kpi-icon violet"><i class="ri-graduation-cap-line"></i></span>
+        <span class="kpi-tag">Corsi</span>
+        <strong>{{ courses.length }}</strong>
+        <small>creati sulle tue prenotazioni</small>
+      </a>
+      <a routerLink="/bookings" class="kpi card card-pad">
+        <span class="kpi-icon orange"><i class="ri-time-line"></i></span>
+        <span class="kpi-tag">Pagamenti pendenti</span>
+        <strong>{{ formatCurrency(pendingAmount) }}</strong>
+        <small>da completare</small>
+      </a>
+      <a routerLink="/courses" class="kpi card card-pad">
+        <span class="kpi-icon green"><i class="ri-bank-card-line"></i></span>
+        <span class="kpi-tag">Incassato</span>
+        <strong>{{ formatCurrency(paidRevenue) }}</strong>
+        <small>pagamenti registrati</small>
+      </a>
+    </section>
+
+    <section class="dashboard-grid">
+      <div class="card card-pad">
+        <div class="section-title">
+          <h2>Prossime prenotazioni</h2>
+          <a routerLink="/bookings">Vedi tutte</a>
+        </div>
+        <div class="list" *ngIf="upcomingBookings.length; else noBookings">
+          <div *ngFor="let booking of upcomingBookings" class="list-row">
+            <div>
+              <strong>{{ booking.name }}</strong>
+              <span>{{ spaceName(booking) }} - {{ formatDate(booking.date) }} {{ booking.startTime }}</span>
+            </div>
+            <span class="pill" [class]="booking.status">{{ booking.status }}</span>
+          </div>
+        </div>
+        <ng-template #noBookings>
+          <div class="empty">Nessuna prenotazione futura.</div>
+        </ng-template>
+      </div>
+
+      <div class="card card-pad">
+        <div class="section-title">
+          <h2>Azioni rapide</h2>
+        </div>
+        <div class="quick-actions">
+          <a mat-button routerLink="/spaces" class="action-primary"><i class="ri-building-4-line"></i>Acquista spazio</a>
+          <a mat-button routerLink="/courses" class="action-filter"><i class="ri-add-circle-line"></i>Crea corso</a>
+          <a mat-button routerLink="/bookings" class="action-filter"><i class="ri-bank-card-line"></i>Controlla pagamenti</a>
+        </div>
+      </div>
+    </section>
+  </ng-container>
+</div>

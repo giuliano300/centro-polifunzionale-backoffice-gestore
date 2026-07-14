@@ -1,0 +1,127 @@
+.filters {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr)) auto auto;
+  align-items: start;
+  gap: 10px;
+}
+
+.booking-list {
+  display: grid;
+  gap: 12px;
+}
+
+.booking-card {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.empty-bookings {
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  padding: 34px 18px;
+  text-align: center;
+
+  i {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 42px;
+    height: 42px;
+    border-radius: 10px;
+    background: var(--action-filter-bg);
+    color: var(--action-filter-text);
+    font-size: 22px;
+    line-height: 1;
+  }
+
+  strong {
+    color: var(--ui-text-strong);
+    font-family: var(--headingFontFamily);
+    font-size: 16px;
+    font-weight: 500;
+  }
+
+  span {
+    color: var(--ui-text-muted);
+  }
+}
+
+.booking-main,
+.booking-foot,
+.booking-status {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.booking-main {
+  justify-content: space-between;
+
+  h2 {
+    margin: 0 0 6px;
+    font-size: 18px;
+    font-weight: 500;
+  }
+
+  p {
+    margin: 0;
+    color: var(--muted);
+  }
+}
+
+.booking-status {
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.booking-foot {
+  justify-content: flex-end;
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+
+  span {
+    margin-right: auto;
+    color: var(--muted);
+  }
+}
+
+.payment-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+
+  button {
+    min-height: 38px;
+  }
+}
+
+.simulate-payment-button {
+  color: var(--action-warning-text) !important;
+  background: var(--action-warning-bg) !important;
+}
+
+@media (max-width: 980px) {
+  .filters {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 700px) {
+  .filters,
+  .booking-main {
+    grid-template-columns: 1fr;
+  }
+
+  .booking-main,
+  .booking-foot {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .payment-actions {
+    justify-content: flex-start;
+  }
+}

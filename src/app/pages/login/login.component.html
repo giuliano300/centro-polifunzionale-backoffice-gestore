@@ -1,0 +1,78 @@
+<div class="sign-in-area">
+  <div class="d-table">
+    <div class="d-table-cell">
+      <div class="trinta-form ml-auto mr-auto bg-white border-radius">
+        <div class="login-head">
+          <span>{{ isRecovery ? 'Recupero accesso' : 'Accesso gestore' }}</span>
+          <h3>{{ isRecovery ? 'Imposta una nuova password' : "N'Agorà Gestore" }}</h3>
+          <p>{{ isRecovery ? 'Inserisci email gestore e nuova password.' : 'Usa le credenziali del tuo profilo gestore.' }}</p>
+        </div>
+
+        <form *ngIf="!isRecovery" [formGroup]="form" (ngSubmit)="submit()" class="login-form">
+          <div class="form-group">
+            <label class="label d-block fw-medium mb-10">Email</label>
+            <mat-form-field>
+              <i class="ri-mail-line field-icon"></i>
+              <mat-label>Inserisci email</mat-label>
+              <input matInput formControlName="email" type="email">
+            </mat-form-field>
+          </div>
+
+          <div class="form-group">
+            <label class="label d-block fw-medium mb-10">Password</label>
+            <mat-form-field>
+              <i class="ri-lock-line field-icon"></i>
+              <mat-label>Inserisci password</mat-label>
+              <input matInput formControlName="password" type="password">
+            </mat-form-field>
+          </div>
+
+          <div *ngIf="errorMessage" class="login-error">{{ errorMessage }}</div>
+          <div *ngIf="successMessage" class="login-success">{{ successMessage }}</div>
+
+          <button mat-button class="action-primary" type="submit" [disabled]="form.invalid || isLoading">
+            {{ isLoading ? 'Accesso...' : 'Accedi' }}
+          </button>
+          <button mat-button class="link-button" type="button" (click)="toggleRecovery()">Recupera password</button>
+        </form>
+
+        <form *ngIf="isRecovery" [formGroup]="recoveryForm" (ngSubmit)="resetPassword()" class="login-form">
+          <div class="form-group">
+            <label class="label d-block fw-medium mb-10">Email gestore</label>
+            <mat-form-field>
+              <i class="ri-mail-line field-icon"></i>
+              <mat-label>Email gestore</mat-label>
+              <input matInput formControlName="email" type="email">
+            </mat-form-field>
+          </div>
+
+          <div class="form-group">
+            <label class="label d-block fw-medium mb-10">Nuova password</label>
+            <mat-form-field>
+              <i class="ri-lock-line field-icon"></i>
+              <mat-label>Nuova password</mat-label>
+              <input matInput formControlName="password" type="password">
+            </mat-form-field>
+          </div>
+
+          <div class="form-group">
+            <label class="label d-block fw-medium mb-10">Conferma password</label>
+            <mat-form-field>
+              <i class="ri-lock-password-line field-icon"></i>
+              <mat-label>Conferma password</mat-label>
+              <input matInput formControlName="confirmPassword" type="password">
+            </mat-form-field>
+          </div>
+
+          <div *ngIf="errorMessage" class="login-error">{{ errorMessage }}</div>
+          <div *ngIf="successMessage" class="login-success">{{ successMessage }}</div>
+
+          <button mat-button class="action-primary" type="submit" [disabled]="recoveryForm.invalid || isLoading">
+            {{ isLoading ? 'Aggiornamento...' : 'Aggiorna password' }}
+          </button>
+          <button mat-button class="link-button" type="button" (click)="toggleRecovery()">Torna al login</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>

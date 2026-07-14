@@ -1,0 +1,322 @@
+.courses-layout {
+  display: grid;
+  grid-template-columns: minmax(260px, .55fr) minmax(0, 1.45fr);
+  gap: 16px;
+}
+
+.section-title {
+  margin-bottom: 14px;
+
+  h2 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 500;
+  }
+}
+
+.course-alert {
+  border-color: var(--action-warning-border);
+  background: var(--action-warning-bg-soft);
+  color: var(--action-warning-text);
+  font-weight: 500;
+}
+
+.mini-list {
+  display: grid;
+  gap: 8px;
+}
+
+.booking-pick {
+  justify-content: flex-start;
+  min-height: 44px;
+  text-align: left;
+
+  span {
+    display: grid;
+    gap: 3px;
+  }
+
+  small {
+    color: var(--action-warning-text);
+    font-size: 12px;
+    font-weight: 500;
+  }
+}
+
+.booking-pick.booking-used {
+  color: var(--ui-text-muted) !important;
+  background: var(--action-cancel-bg) !important;
+  cursor: not-allowed;
+  opacity: 1;
+}
+
+.course-form {
+  display: grid;
+  gap: 14px;
+}
+
+.course-form-error {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 12px 14px;
+  border: 1px solid var(--action-warning-border);
+  border-radius: 8px;
+  background: var(--action-warning-bg-soft);
+  color: var(--action-warning-text);
+  font-weight: 500;
+
+  i {
+    font-size: 18px;
+    line-height: 1;
+  }
+}
+
+.course-form-section {
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid var(--ui-border-soft);
+  border-radius: 8px;
+  background: var(--ui-surface-muted);
+}
+
+.form-section-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  i {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    background: var(--action-filter-bg);
+    color: var(--action-filter-text);
+    font-size: 16px;
+    line-height: 1;
+  }
+
+  h3 {
+    margin: 0;
+    color: var(--ui-text-strong);
+    font-size: 15px;
+    font-weight: 500;
+  }
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+
+  .full {
+    grid-column: 1 / -1;
+  }
+}
+
+.locked-field {
+  .locked-icon {
+    color: var(--ui-text-muted);
+    font-size: 17px;
+    line-height: 1;
+  }
+
+  input {
+    color: var(--ui-text-muted) !important;
+    font-weight: 500 !important;
+  }
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.course-list,
+.subscriber-list {
+  display: grid;
+  gap: 12px;
+}
+
+.created-courses {
+  margin-top: 16px;
+}
+
+.empty-courses {
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  padding: 30px 18px;
+  border: 1px dashed var(--ui-border-input);
+  border-radius: 8px;
+  background: var(--ui-surface-muted);
+  text-align: center;
+
+  i {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 42px;
+    height: 42px;
+    border-radius: 10px;
+    background: var(--action-filter-bg);
+    color: var(--action-filter-text);
+    font-size: 22px;
+    line-height: 1;
+  }
+
+  strong {
+    color: var(--ui-text-strong);
+    font-size: 16px;
+    font-weight: 500;
+  }
+
+  span {
+    color: var(--ui-text-muted);
+  }
+}
+
+.course-card {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.course-main,
+.subscriber-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.course-main {
+  h2 {
+    margin: 0 0 6px;
+    font-size: 18px;
+    font-weight: 500;
+  }
+
+  p {
+    margin: 0;
+    color: var(--muted);
+  }
+}
+
+.subscribers {
+  display: grid;
+  gap: 14px;
+}
+
+.subscriber-form {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.subscriber-row {
+  padding: 12px;
+  border-radius: 8px;
+  background: var(--surface-soft);
+
+  strong,
+  span {
+    display: block;
+  }
+
+  span {
+    margin-top: 4px;
+    color: var(--muted);
+  }
+}
+
+.confirm-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(15, 23, 42, 0.34);
+}
+
+.confirm-dialog {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 14px;
+  width: min(520px, 100%);
+  padding: 20px;
+  border: 1px solid var(--action-delete-border);
+  border-radius: 8px;
+  background: var(--ui-surface);
+  box-shadow: 0 26px 70px rgba(15, 23, 42, 0.18);
+
+  h2 {
+    margin: 0 0 8px;
+    color: var(--ui-text-strong);
+    font-size: 20px;
+    font-weight: 500;
+  }
+
+  p {
+    margin: 0;
+    color: var(--ui-text-muted);
+    line-height: 1.55;
+  }
+}
+
+.confirm-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 8px;
+  background: var(--action-delete-bg);
+  color: var(--action-delete-text);
+  font-size: 22px;
+  line-height: 1;
+}
+
+.confirm-actions {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 4px;
+
+  button {
+    min-height: 40px;
+  }
+}
+
+@media (max-width: 980px) {
+  .courses-layout,
+  .subscriber-form,
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .course-main,
+  .subscriber-row {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .confirm-dialog {
+    grid-template-columns: 1fr;
+  }
+
+  .confirm-actions {
+    flex-direction: column-reverse;
+
+    button {
+      width: 100%;
+    }
+  }
+}
