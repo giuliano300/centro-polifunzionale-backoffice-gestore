@@ -3,7 +3,7 @@ import { forkJoin } from 'rxjs';
 import { NgFor, NgIf } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
-import { BookingWithPayments, Course, Payment, Space } from '../../core/models';
+import { Booking, BookingWithPayments, Course, Payment, Space } from '../../core/models';
 import { ApiService } from '../../core/api.service';
 
 @Component({
@@ -71,5 +71,15 @@ export class DashboardComponent {
 
   spaceName(item: BookingWithPayments['booking']): string {
     return typeof item.space === 'string' ? '-' : item.space?.name || '-';
+  }
+
+  bookingStatusLabel(status: Booking['status']): string {
+    const labels: Record<Booking['status'], string> = {
+      pending: 'In attesa',
+      confirmed: 'Confermata',
+      cancellation_requested: 'Richiesta annullamento',
+      cancelled: 'Annullata',
+    };
+    return labels[status] || 'In attesa';
   }
 }

@@ -9,7 +9,7 @@
     max-width: 520px;
     padding: 35px 30px;
     border: 1px solid var(--ui-border);
-    border-radius: 8px;
+    border-radius: var(--radius);
     background: var(--ui-surface);
     box-shadow: 0 14px 36px var(--ui-shadow-soft);
   }
@@ -67,7 +67,7 @@
 .login-error,
 .login-success {
   padding: 12px 14px;
-  border-radius: 6px;
+  border-radius: var(--radius);
   font-size: 13px;
   line-height: 1.4;
 }
@@ -111,7 +111,7 @@
   .mat-mdc-text-field-wrapper {
     padding: 0 15px 0 58px;
     border: 1px solid var(--app-bg);
-    border-radius: 10px !important;
+    border-radius: var(--radius);
     background-color: var(--app-bg) !important;
   }
 

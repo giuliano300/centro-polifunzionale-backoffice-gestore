@@ -34,7 +34,7 @@
       </a>
       <a routerLink="/courses" class="kpi card card-pad">
         <span class="kpi-icon green"><i class="ri-bank-card-line"></i></span>
-        <span class="kpi-tag">Incassato</span>
+        <span class="kpi-tag">Pagato</span>
         <strong>{{ formatCurrency(paidRevenue) }}</strong>
         <small>pagamenti registrati</small>
       </a>
@@ -52,7 +52,7 @@
               <strong>{{ booking.name }}</strong>
               <span>{{ spaceName(booking) }} - {{ formatDate(booking.date) }} {{ booking.startTime }}</span>
             </div>
-            <span class="pill" [class]="booking.status">{{ booking.status }}</span>
+            <span class="pill" [class]="booking.status">{{ bookingStatusLabel(booking.status) }}</span>
           </div>
         </div>
         <ng-template #noBookings>

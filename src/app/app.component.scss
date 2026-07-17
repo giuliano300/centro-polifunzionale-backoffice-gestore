@@ -1,15 +1,17 @@
 .app-shell {
   display: grid;
   grid-template-columns: 292px minmax(0, 1fr);
+  grid-template-rows: 64px minmax(0, 1fr);
   min-height: 100vh;
   background:
-    linear-gradient(180deg, rgba(219, 234, 254, 0.34), rgba(245, 247, 250, 0) 320px),
+    linear-gradient(180deg, rgba(219, 234, 254, 0.28), rgba(245, 247, 250, 0) 280px),
     var(--app-bg);
 }
 
 .side {
   position: sticky;
   top: 0;
+  grid-row: 1 / -1;
   display: flex;
   flex-direction: column;
   gap: 24px;
@@ -35,7 +37,7 @@
     height: 48px;
     padding: 7px 10px;
     border: 1px solid var(--ui-border);
-    border-radius: 10px;
+    border-radius: var(--radius);
     background: var(--ui-surface);
 
     img {
@@ -76,7 +78,7 @@ nav {
     min-height: 46px;
     padding: 0 12px;
     border: 1px solid transparent;
-    border-radius: 8px;
+    border-radius: var(--radius);
     color: var(--tone-slate-text);
     font-family: var(--headingFontFamily);
     font-size: 14px;
@@ -90,7 +92,7 @@ nav {
       justify-content: center;
       width: 30px;
       height: 30px;
-      border-radius: 8px;
+      border-radius: var(--radius);
       color: var(--action-filter-text);
       background: var(--action-filter-bg-soft);
       font-size: 18px;
@@ -117,32 +119,146 @@ nav {
   }
 }
 
-.logout-button {
-  display: inline-flex;
+.app-header {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  min-width: 0;
+  min-height: 64px;
+  padding: 10px 24px;
+  border-bottom: 1px solid var(--ui-border);
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow: 0 10px 28px rgba(15, 23, 42, 0.04);
+  backdrop-filter: blur(14px);
+}
+
+.header-icon {
+  position: relative;
+  display: inline-flex !important;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  min-height: 44px;
-  margin-top: auto;
+  min-width: 40px !important;
+  width: 40px;
+  height: 40px;
+  padding: 0 !important;
+  border-radius: var(--radius) !important;
+  color: var(--action-filter-text) !important;
+  background: var(--action-filter-bg-soft) !important;
 
   i {
-    font-size: 18px;
+    font-size: 20px;
     line-height: 1;
   }
+
+  &.active,
+  &:hover {
+    color: var(--action-filter-text-strong) !important;
+    background: var(--action-filter-bg) !important;
+  }
+}
+
+.logout-button {
+  color: var(--action-delete-text) !important;
+  background: var(--action-delete-bg-light) !important;
+
+  &:hover {
+    background: var(--action-delete-bg-light-hover) !important;
+  }
+}
+
+.notification-box {
+  position: relative;
+}
+
+.notification-toggle {
+  strong {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    min-width: 20px;
+    height: 20px;
+    padding: 0 5px;
+    border: 2px solid var(--ui-surface);
+    border-radius: 999px;
+    background: var(--action-delete-bg-light);
+    color: var(--action-delete-text-strong);
+    font-size: 11px;
+    font-weight: 500;
+    line-height: 16px;
+    text-align: center;
+  }
+}
+
+.notification-list {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  display: grid;
+  gap: 8px;
+  width: min(340px, calc(100vw - 30px));
+  max-height: 320px;
+  overflow: auto;
+  padding: 10px;
+  border: 1px solid var(--ui-border-soft);
+  border-radius: var(--radius);
+  background: var(--ui-surface);
+  box-shadow: var(--shadow);
+}
+
+.notification-item {
+  display: grid;
+  gap: 4px;
+  width: 100%;
+  padding: 9px;
+  border: 0;
+  border-radius: var(--radius);
+  background: var(--ui-surface-muted);
+  text-align: left;
+  cursor: pointer;
+  transition: var(--transition);
+
+  &:hover {
+    background: var(--action-filter-bg-soft);
+  }
+
+  strong {
+    color: var(--ui-text-strong);
+    font-size: 13px;
+    font-weight: 500;
+  }
+
+  span {
+    color: var(--ui-text-muted);
+    font-size: 12px;
+    line-height: 1.35;
+  }
+}
+
+.notification-empty {
+  padding: 10px;
+  color: var(--ui-text-muted);
+  font-size: 13px;
+  text-align: center;
 }
 
 main {
   min-width: 0;
-  padding: 28px;
+  padding: 24px;
 }
 
 @media (max-width: 900px) {
   .app-shell {
     grid-template-columns: 1fr;
+    grid-template-rows: auto auto minmax(0, 1fr);
   }
 
   .side {
     position: static;
+    grid-row: auto;
     height: auto;
     padding: 14px;
   }
@@ -165,6 +281,14 @@ main {
     span {
       display: none;
     }
+  }
+
+  .app-header {
+    position: sticky;
+    top: 0;
+    justify-content: flex-end;
+    min-height: 56px;
+    padding: 8px 14px;
   }
 
   main {

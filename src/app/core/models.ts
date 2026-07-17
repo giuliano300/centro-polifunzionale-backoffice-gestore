@@ -36,6 +36,7 @@ export interface Space {
   rentalModes: Array<'time' | 'full_day'>;
   timeSlotMinutes?: number;
   workstationCount?: number;
+  courseCreationAdvanceHours?: number;
   openingHours?: SpaceOpeningSlot[];
   isAvailable: boolean;
 }
@@ -49,7 +50,7 @@ export interface Booking {
   rentalUnit: 'whole_room' | 'workstation';
   rentalMode: 'time' | 'full_day';
   workstationQuantity?: number;
-  status: 'pending' | 'confirmed' | 'cancelled';
+  status: 'pending' | 'confirmed' | 'cancellation_requested' | 'cancelled';
   user?: string | User;
   space?: string | Space;
 }
@@ -68,6 +69,13 @@ export interface Payment {
 export interface BookingWithPayments {
   booking: Booking;
   payments: Payment[];
+}
+
+export interface PaginatedBookings {
+  items: BookingWithPayments[];
+  total: number;
+  page: number;
+  limit: number;
 }
 
 export interface AvailabilitySlot {
@@ -107,4 +115,21 @@ export interface CourseBooking {
   enrollmentType: 'paid' | 'free';
   amount: number;
   paymentStatus: 'PENDING' | 'PAID' | 'FAILED' | 'FREE';
+}
+
+export interface WalletMovement {
+  _id: string;
+  type: 'credit' | 'debit';
+  reason: 'cancellation_refund' | 'booking_payment' | 'manual';
+  amount: number;
+  currency: 'EUR';
+  booking?: string | Booking;
+  description?: string;
+  createdAt?: string | Date;
+}
+
+export interface WalletSummary {
+  currency: 'EUR';
+  balance: number;
+  movements: WalletMovement[];
 }

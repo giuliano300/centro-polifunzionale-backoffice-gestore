@@ -64,6 +64,11 @@ $trinta-theme: mat.define-theme((
     --whiteColor: #ffffff;
     --bodyColor: #a9a9c8;
     --transition: .5s;
+    --radius: 6px;
+    --mdc-text-button-container-shape: var(--radius);
+    --mdc-filled-button-container-shape: var(--radius);
+    --mdc-protected-button-container-shape: var(--radius);
+    --mdc-outlined-button-container-shape: var(--radius);
     --fontSize: 14px;
     --app-bg: #f5f7fa;
     --ui-surface: #ffffff;
@@ -118,7 +123,10 @@ $trinta-theme: mat.define-theme((
     --action-delete-text-strong: #b42318;
     --action-delete-bg: #fee2e2;
     --action-delete-bg-soft: #fdecec;
+    --action-delete-bg-light: #fde7e7;
+    --action-delete-bg-light-hover: #ffd2d2;
     --action-delete-border: #fecaca;
+    --action-delete-border-light: #f4b7b7;
     --action-warning-text: #c2410c;
     --action-warning-text-strong: #9a3412;
     --action-warning-text-muted: #946200;
@@ -293,7 +301,7 @@ input {
     min-width: auto;
     margin-top: -10px;
     margin-bottom: 10px;
-    border-radius: 6px;
+    border-radius: var(--radius);
     padding: 12px 25px;
     color: var(--whiteColor) !important;
     background-color: var(--primaryColor);
@@ -315,7 +323,14 @@ button,
 .mat-mdc-outlined-button,
 .mat-mdc-icon-button,
 .filter-button {
-    border-radius: 6px !important;
+    border-radius: var(--radius);
+}
+
+.mat-mdc-button .mat-mdc-button-persistent-ripple,
+.mat-mdc-unelevated-button .mat-mdc-button-persistent-ripple,
+.mat-mdc-raised-button .mat-mdc-button-persistent-ripple,
+.mat-mdc-outlined-button .mat-mdc-button-persistent-ripple {
+    border-radius: var(--radius);
 }
 
 button.mat-mdc-button,
@@ -521,7 +536,7 @@ button.table-action-button.action-delete.mat-mdc-button {
         min-width: auto;
         margin-top: 0;
         margin-bottom: 10px;
-        border-radius: 6px;
+        border-radius: var(--radius);
         padding: 18px 25px;
         color: var(--action-filter-text) !important;
         background-color: var(--action-filter-bg);
@@ -650,7 +665,7 @@ h2[mat-dialog-title] {
     color: var(--action-filter-text);
     font-size: 14px;
     cursor: pointer;
-    border-radius: 6px;
+    border-radius: var(--radius);
     font-family: 'Poppins'!important;
 }
   
@@ -724,7 +739,7 @@ h5{
 
 .ngx-file-drop__drop-zone{
     background-color: var(--app-bg)!important;
-    border-radius: 10px!important;
+    border-radius: var(--radius);
     border: 1px solid var(--app-bg)!important;
 }
 
@@ -796,7 +811,7 @@ h5{
 }
 
 .radius-0{
-    border-radius: 0!important;
+    border-radius: var(--radius);
 }
 
 .alert-excedeed{
@@ -893,7 +908,7 @@ button.action-primary.mat-mdc-button {
   gap: 16px;
   padding: 16px 18px;
   border: 1px solid var(--ui-border);
-  border-radius: 8px;
+  border-radius: var(--radius);
   background: var(--ui-surface);
   box-shadow: 0 10px 24px var(--ui-shadow-soft);
 
@@ -930,14 +945,14 @@ button.action-primary.mat-mdc-button {
 
 .card {
   border: 1px solid var(--ui-border);
-  border-radius: 8px;
+  border-radius: var(--radius);
   background: var(--ui-surface);
   box-shadow: var(--shadow);
 }
 
 .mat-mdc-card {
   border: 1px solid var(--ui-border) !important;
-  border-radius: 8px !important;
+  border-radius: var(--radius);
   background: var(--ui-surface) !important;
   box-shadow: var(--shadow) !important;
 }
@@ -953,16 +968,16 @@ button.action-primary.mat-mdc-button {
 
 .mat-mdc-form-field .mat-mdc-text-field-wrapper {
   min-height: 50px;
-  border-radius: 6px !important;
+  border-radius: var(--radius);
   background-color: var(--whiteColor) !important;
 }
 
 .mat-mdc-form-field .mdc-notched-outline__leading {
-  border-radius: 6px 0 0 6px !important;
+  border-radius: var(--radius);
 }
 
 .mat-mdc-form-field .mdc-notched-outline__trailing {
-  border-radius: 0 6px 6px 0 !important;
+  border-radius: var(--radius);
 }
 
 .mat-mdc-form-field .mdc-notched-outline__leading,
@@ -1025,7 +1040,7 @@ button.action-primary.mat-mdc-button {
   align-items: center;
   min-height: 28px;
   padding: 5px 10px;
-  border-radius: 999px;
+  border-radius: var(--radius);
   font-size: 12px;
   font-weight: 500;
 }

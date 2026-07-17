@@ -30,6 +30,7 @@
           <mat-option value="">Tutti</mat-option>
           <mat-option value="pending">In attesa</mat-option>
           <mat-option value="confirmed">Confermata</mat-option>
+          <mat-option value="cancellation_requested">Richiesta annullamento</mat-option>
           <mat-option value="cancelled">Annullata</mat-option>
         </mat-select>
       </mat-form-field>
@@ -37,7 +38,7 @@
         <mat-label>Cerca</mat-label>
         <input matInput formControlName="search">
       </mat-form-field>
-      <button mat-button class="action-filter" type="button" (click)="load()">
+      <button mat-button class="action-filter" type="button" (click)="applyFilters()">
         <i class="ri-filter-3-line"></i>
         <span>Filtra</span>
       </button>
@@ -66,14 +67,23 @@
             <p>{{ spaceName(item.booking) }} - {{ formatDate(item.booking.date) }} - {{ item.booking.startTime }} / {{ item.booking.endTime }}</p>
           </div>
           <div class="booking-status">
-            <span class="pill" [class]="item.booking.status">{{ item.booking.status }}</span>
-            <span class="pill" [class]="paymentStatus(item)">{{ paymentStatus(item) }}</span>
+            <span class="pill" [class]="item.booking.status">{{ bookingStatusLabel(item.booking.status) }}</span>
+            <span class="pill" [class]="paymentStatus(item)">{{ paymentStatusLabel(paymentStatus(item)) }}</span>
           </div>
         </div>
 
         <div class="booking-foot">
           <span>{{ item.booking.rentalMode === 'full_day' ? 'Tutta la giornata' : 'A frazioni' }}</span>
           <strong>{{ formatCurrency(paymentAmount(item)) }}</strong>
+          <button
+            *ngIf="canRequestCancellation(item)"
+            mat-button
+            class="cancel-request-button"
+            [disabled]="cancellingBookingId === item.booking._id"
+            (click)="openCancellationDialog(item)">
+            <i class="ri-close-circle-line"></i>
+            <span>{{ cancellingBookingId === item.booking._id ? 'Invio richiesta...' : 'Richiedi annullamento' }}</span>
+          </button>
           <div *ngIf="isPayable(item)" class="payment-actions">
             <button
               mat-button
@@ -111,5 +121,66 @@
         </div>
       </mat-card-content>
     </mat-card>
+  </div>
+
+  <div class="card card-pad booking-pagination" *ngIf="!isLoading && total > 0">
+    <div>
+      <strong>{{ pageStart() }}-{{ pageEnd() }}</strong>
+      <span>di {{ total }} prenotazioni</span>
+    </div>
+    <mat-form-field appearance="outline">
+      <mat-label>Per pagina</mat-label>
+      <mat-select [value]="limit" (selectionChange)="changeLimit($event.value)">
+        <mat-option [value]="5">5</mat-option>
+        <mat-option [value]="10">10</mat-option>
+        <mat-option [value]="20">20</mat-option>
+        <mat-option [value]="50">50</mat-option>
+      </mat-select>
+    </mat-form-field>
+    <div class="pagination-actions">
+      <button mat-button class="action-filter" type="button" [disabled]="page <= 1" (click)="previousPage()">
+        <i class="ri-arrow-left-s-line"></i>
+        <span>Precedente</span>
+      </button>
+      <span>Pagina {{ page }} di {{ totalPages() }}</span>
+      <button mat-button class="action-filter" type="button" [disabled]="page >= totalPages()" (click)="nextPage()">
+        <span>Successiva</span>
+        <i class="ri-arrow-right-s-line"></i>
+      </button>
+    </div>
+  </div>
+
+  <div class="cancel-modal-backdrop" *ngIf="cancellationTarget" (click)="closeCancellationDialog()">
+    <div class="cancel-modal" (click)="$event.stopPropagation()">
+      <div class="cancel-modal-icon">
+        <i class="ri-error-warning-line"></i>
+      </div>
+      <div>
+        <h2>Richiedi annullamento</h2>
+        <p>
+          La richiesta verra valutata dal backoffice. In base alle regole dello spazio e ai tempi della richiesta,
+          potresti non ricevere un rimborso completo.
+        </p>
+        <p>
+          L importo rimborsato potra essere accreditato nel portafogli gestore e usato come credito disponibile
+          per successive operazioni. Il backoffice potra confermare l importo in euro o diminuirlo, mai aumentarlo.
+        </p>
+        <div class="cancel-modal-summary">
+          <span>{{ spaceName(cancellationTarget.booking) }}</span>
+          <strong>{{ formatDate(cancellationTarget.booking.date) }} - {{ cancellationTarget.booking.startTime }} / {{ cancellationTarget.booking.endTime }}</strong>
+          <small>Importo prenotazione {{ formatCurrency(paymentAmount(cancellationTarget)) }}</small>
+        </div>
+      </div>
+      <div class="cancel-modal-actions">
+        <button mat-button class="action-cancel" type="button" (click)="closeCancellationDialog()">
+          <i class="ri-close-line"></i>
+          <span>Annulla</span>
+        </button>
+        <button mat-button class="action-delete" type="button" [disabled]="!!cancellingBookingId" (click)="confirmCancellationRequest()">
+          <i class="ri-close-circle-line"></i>
+          <span>{{ cancellingBookingId ? 'Invio richiesta...' : 'Conferma richiesta' }}</span>
+        </button>
+      </div>
+    </div>
   </div>
 </div>

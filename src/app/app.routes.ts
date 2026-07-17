@@ -5,6 +5,8 @@ import { DashboardComponent } from './pages/dashboard/dashboard.component';
 import { SpacesComponent } from './pages/spaces/spaces.component';
 import { BookingsComponent } from './pages/bookings/bookings.component';
 import { CoursesComponent } from './pages/courses/courses.component';
+import { WalletComponent } from './pages/wallet/wallet.component';
+import { ProfileComponent } from './pages/profile/profile.component';
 
 export const routes: Routes = [
   { path: 'login', component: LoginComponent },
@@ -12,5 +14,7 @@ export const routes: Routes = [
   { path: 'spaces', canActivate: [authGuard], component: SpacesComponent },
   { path: 'bookings', canActivate: [authGuard], component: BookingsComponent },
   { path: 'courses', canActivate: [authGuard], component: CoursesComponent },
+  { path: 'wallet', canActivate: [authGuard], component: WalletComponent },
+  { path: 'profile', canActivate: [authGuard], component: ProfileComponent },
   { path: '**', redirectTo: '' },
 ];

@@ -312,28 +312,28 @@
 
 // Border Radius
 .border-radius {
-    border-radius: 10px !important;
+    border-radius: var(--radius);
 }
 .border-top-radius {
-    border-radius: 10px 10px 0 0 !important;
+    border-radius: var(--radius);
 }
 .border-bottom-radius {
-    border-radius: 0 0 10px 10px !important;
+    border-radius: var(--radius);
 }
 .border-right-radius {
-    border-radius: 0 10px 10px 0 !important;
+    border-radius: var(--radius);
 }
 .border-left-radius {
-    border-radius: 10px 0 0 10px !important;
+    border-radius: var(--radius);
 }
 .rounded-circle {
-    border-radius: 50% !important;
+    border-radius: var(--radius);
 }
 .rounded-pill {
-    border-radius: 50rem !important;
+    border-radius: var(--radius);
 }
 .border-radius-0 {
-    border-radius: 0 !important;
+    border-radius: var(--radius);
 }
 
 // Font weight

@@ -1,0 +1,57 @@
+<div class="page">
+  <div class="page-head">
+    <div>
+      <h1>Dati personali</h1>
+      <p>Modifica i dati del tuo profilo gestore. L'email di iscrizione non può essere cambiata.</p>
+    </div>
+  </div>
+
+  <div *ngIf="isLoading" class="card card-pad">Caricamento dati...</div>
+
+  <section *ngIf="!isLoading" class="profile-card card card-pad">
+    <div class="profile-summary">
+      <span class="profile-avatar"><i class="ri-user-line"></i></span>
+      <div>
+        <strong>{{ user?.name || 'Gestore' }}</strong>
+        <span>{{ user?.email }}</span>
+      </div>
+    </div>
+
+    <div *ngIf="message" class="feedback success">{{ message }}</div>
+    <div *ngIf="errorMessage" class="feedback error">{{ errorMessage }}</div>
+
+    <form [formGroup]="form" (ngSubmit)="save()" class="form-grid">
+      <mat-form-field appearance="outline">
+        <mat-label>Nome</mat-label>
+        <input matInput formControlName="name">
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Email iscrizione</mat-label>
+        <input matInput formControlName="email">
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Telefono</mat-label>
+        <input matInput formControlName="phone">
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Codice fiscale</mat-label>
+        <input matInput formControlName="taxCode">
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="full">
+        <mat-label>Nuova password</mat-label>
+        <input matInput type="password" formControlName="password">
+      </mat-form-field>
+
+      <div class="actions full">
+        <button mat-button type="submit" class="action-primary" [disabled]="isSaving">
+          <i class="ri-save-line"></i>
+          <span>{{ isSaving ? 'Salvataggio...' : 'Salva modifiche' }}</span>
+        </button>
+      </div>
+    </form>
+  </section>
+</div>

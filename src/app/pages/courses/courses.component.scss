@@ -19,6 +19,18 @@
   background: var(--action-warning-bg-soft);
   color: var(--action-warning-text);
   font-weight: 500;
+
+  &.success {
+    border-color: var(--action-save-bg-hover);
+    background: var(--action-save-bg-soft);
+    color: var(--action-save-text);
+  }
+
+  &.delete {
+    border-color: var(--action-delete-border);
+    background: var(--action-delete-bg-soft);
+    color: var(--action-delete-text-strong);
+  }
 }
 
 .mini-list {
@@ -61,7 +73,7 @@
   gap: 9px;
   padding: 12px 14px;
   border: 1px solid var(--action-warning-border);
-  border-radius: 8px;
+  border-radius: var(--radius);
   background: var(--action-warning-bg-soft);
   color: var(--action-warning-text);
   font-weight: 500;
@@ -77,7 +89,7 @@
   gap: 12px;
   padding: 14px;
   border: 1px solid var(--ui-border-soft);
-  border-radius: 8px;
+  border-radius: var(--radius);
   background: var(--ui-surface-muted);
 }
 
@@ -92,7 +104,7 @@
     justify-content: center;
     width: 28px;
     height: 28px;
-    border-radius: 6px;
+    border-radius: var(--radius);
     background: var(--action-filter-bg);
     color: var(--action-filter-text);
     font-size: 16px;
@@ -153,7 +165,7 @@
   gap: 8px;
   padding: 30px 18px;
   border: 1px dashed var(--ui-border-input);
-  border-radius: 8px;
+  border-radius: var(--radius);
   background: var(--ui-surface-muted);
   text-align: center;
 
@@ -163,7 +175,7 @@
     justify-content: center;
     width: 42px;
     height: 42px;
-    border-radius: 10px;
+    border-radius: var(--radius);
     background: var(--action-filter-bg);
     color: var(--action-filter-text);
     font-size: 22px;
@@ -183,7 +195,7 @@
 
 .course-card {
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: var(--radius);
 }
 
 .course-main,
@@ -212,15 +224,146 @@
   gap: 14px;
 }
 
+.subscribers-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+
+  button {
+    min-height: 38px;
+    white-space: nowrap;
+  }
+}
+
 .subscriber-form {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: minmax(260px, 0.85fr) minmax(320px, 1.15fr);
+  gap: 14px;
+}
+
+.subscriber-form-panel {
+  display: grid;
+  gap: 14px;
+  padding: 14px;
+  border: 1px solid var(--ui-border-input);
+  border-radius: var(--radius);
+  background: var(--ui-surface);
+}
+
+.subscriber-panel-title {
+  display: flex;
+  align-items: center;
   gap: 10px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--ui-border-soft);
+
+  > i {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    border-radius: var(--radius);
+    background: var(--action-new-bg);
+    color: var(--action-new-text);
+    font-size: 20px;
+    line-height: 1;
+  }
+
+  strong,
+  span {
+    display: block;
+  }
+
+  strong {
+    color: var(--ui-text-strong);
+    font-size: 16px;
+    font-weight: 500;
+  }
+
+  span {
+    margin-top: 2px;
+    color: var(--ui-text-muted);
+    font-size: 13px;
+  }
+}
+
+.subscriber-method {
+  display: grid;
+  gap: 10px;
+  align-content: start;
+  padding: 12px;
+  border: 1px solid var(--ui-border-soft);
+  border-radius: var(--radius);
+  background: var(--ui-surface-muted);
+}
+
+.method-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 28px;
+  color: var(--ui-text-strong);
+  font-size: 14px;
+  font-weight: 500;
+
+  i {
+    color: var(--action-filter-text);
+    font-size: 18px;
+    line-height: 1;
+  }
+}
+
+.new-client-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.subscriber-form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.empty-subscribers {
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  padding: 28px 18px;
+  border: 1px dashed var(--ui-border-input);
+  border-radius: var(--radius);
+  background: var(--ui-surface-muted);
+  text-align: center;
+
+  i {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 42px;
+    height: 42px;
+    border-radius: var(--radius);
+    background: var(--action-filter-bg);
+    color: var(--action-filter-text);
+    font-size: 22px;
+    line-height: 1;
+  }
+
+  strong {
+    color: var(--ui-text-strong);
+    font-size: 16px;
+    font-weight: 500;
+  }
+
+  span {
+    color: var(--ui-text-muted);
+  }
 }
 
 .subscriber-row {
   padding: 12px;
-  border-radius: 8px;
+  border-radius: var(--radius);
   background: var(--surface-soft);
 
   strong,
@@ -252,7 +395,7 @@
   width: min(520px, 100%);
   padding: 20px;
   border: 1px solid var(--action-delete-border);
-  border-radius: 8px;
+  border-radius: var(--radius);
   background: var(--ui-surface);
   box-shadow: 0 26px 70px rgba(15, 23, 42, 0.18);
 
@@ -276,7 +419,7 @@
   justify-content: center;
   width: 44px;
   height: 44px;
-  border-radius: 8px;
+  border-radius: var(--radius);
   background: var(--action-delete-bg);
   color: var(--action-delete-text);
   font-size: 22px;
@@ -298,6 +441,7 @@
 @media (max-width: 980px) {
   .courses-layout,
   .subscriber-form,
+  .new-client-grid,
   .form-grid {
     grid-template-columns: 1fr;
   }
@@ -306,6 +450,23 @@
   .subscriber-row {
     align-items: flex-start;
     flex-direction: column;
+  }
+
+  .subscribers-head {
+    align-items: flex-start;
+    flex-direction: column;
+
+    button {
+      width: 100%;
+    }
+  }
+
+  .subscriber-form-actions {
+    flex-direction: column-reverse;
+
+    button {
+      width: 100%;
+    }
   }
 
   .confirm-dialog {

@@ -10,6 +10,7 @@
           <strong>Gestore</strong>
         </div>
       </div>
+
       <nav>
         <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
           <i class="ri-dashboard-line"></i>
@@ -28,11 +29,38 @@
           <span>Corsi</span>
         </a>
       </nav>
-      <button mat-button class="action-cancel logout-button" (click)="logout()">
-        <i class="ri-logout-box-r-line"></i>
-        <span>Esci</span>
-      </button>
     </aside>
+
+    <header class="app-header">
+      <a mat-button routerLink="/wallet" routerLinkActive="active" class="header-icon" aria-label="Portafogli" matTooltip="Portafogli" matTooltipPosition="below">
+        <i class="ri-wallet-3-line"></i>
+      </a>
+
+      <a mat-button routerLink="/profile" routerLinkActive="active" class="header-icon" aria-label="Dati personali" matTooltip="Dati personali" matTooltipPosition="below">
+        <i class="ri-user-settings-line"></i>
+      </a>
+
+      <div class="notification-box">
+        <button mat-button class="header-icon notification-toggle" type="button" (click)="toggleNotifications()" aria-label="Notifiche" matTooltip="Notifiche" matTooltipPosition="below">
+          <i class="ri-notification-3-line"></i>
+          <strong *ngIf="notifications.unread$ | async as unread">{{ unread }}</strong>
+        </button>
+        <div class="notification-list" *ngIf="isNotificationsOpen">
+          <button class="notification-item" type="button" *ngFor="let item of notifications.notifications$ | async" (click)="openNotification(item.link)">
+            <strong>{{ item.title }}</strong>
+            <span>{{ item.message }}</span>
+          </button>
+          <div class="notification-empty" *ngIf="(notifications.notifications$ | async)?.length === 0">
+            Nessuna notifica
+          </div>
+        </div>
+      </div>
+
+      <button mat-button class="header-icon logout-button" (click)="logout()" aria-label="Esci" matTooltip="Esci" matTooltipPosition="below">
+        <i class="ri-logout-box-r-line"></i>
+      </button>
+    </header>
+
     <main>
       <router-outlet></router-outlet>
     </main>

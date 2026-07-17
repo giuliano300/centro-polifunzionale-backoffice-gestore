@@ -7,6 +7,7 @@ import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { AuthService } from '../../core/auth.service';
+import { NotificationsService } from '../../core/notifications.service';
 
 @Component({
   selector: 'gestore-login',
@@ -31,7 +32,7 @@ export class LoginComponent {
     confirmPassword: ['', [Validators.required, Validators.minLength(6)]],
   });
 
-  constructor(private auth: AuthService, private router: Router) {}
+  constructor(private auth: AuthService, private router: Router, private notifications: NotificationsService) {}
 
   submit(): void {
     if (this.form.invalid || this.isLoading) {
@@ -51,6 +52,7 @@ export class LoginComponent {
           return;
         }
 
+        this.notifications.connect();
         this.router.navigate(['/']);
       },
       error: () => {

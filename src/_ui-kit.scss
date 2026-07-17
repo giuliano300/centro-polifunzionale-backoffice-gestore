@@ -2,7 +2,7 @@
 .mat-mdc-card {
     &.trinta-card {
         box-shadow: unset;
-        border-radius: 6px;
+        border-radius: var(--radius);
         padding: 30px 25px;
 
         .mat-mdc-card-header {
@@ -55,7 +55,7 @@
                         &.default-btn {
                             height: auto;
                             min-width: auto;
-                            border-radius: 6px;
+                            border-radius: var(--radius);
                             padding: 13px 30px;
                             letter-spacing: 0.15px;
                             color: var(--whiteColor);
@@ -126,7 +126,7 @@
                 .apexcharts-tooltip {
                     box-shadow: 0px 20px 80px 0px rgba(50, 110, 189, 0.38);
                     background-color: var(--whiteColor);
-                    border-radius: 3px;
+                    border-radius: var(--radius);
                     font-size: 13px;
                     border: 0;
     
@@ -209,7 +209,7 @@
                 -webkit-overflow-scrolling: touch;
             }
             .NgxEditor__Wrapper {
-                border-radius: 6px;
+                border-radius: var(--radius);
                 margin-bottom: 22px;
                 border-color: #f5f7fa;
 
@@ -232,7 +232,7 @@
                 }
                 .NgxEditor {
                     background-color: #F5F7FA;
-                    border-radius: 6px;
+                    border-radius: var(--radius);
                     min-height: 250px;
                 }
                 .NgxEditor__MenuItem {
@@ -266,7 +266,7 @@
                 .NgxEditor__MenuItem--Button {
                     border: 0;
                     cursor: pointer;
-                    border-radius: 3px;
+                    border-radius: var(--radius);
                     color: var(--whiteColor);
                     font-size: 14px !important;
                     background-color: var(--dangerColor);
@@ -274,7 +274,7 @@
                 .NgxEditor__MenuBar {
                     padding: 0;
                     border-color: #f5f7fa;
-                    border-radius: 5px 5px 0 0;
+                    border-radius: var(--radius);
                 }
                 .NgxEditor__Seperator {
                     border-color: #f5f7fa;
@@ -284,7 +284,7 @@
                         button {
                             border: 0;
                             cursor: pointer;
-                            border-radius: 3px;
+                            border-radius: var(--radius);
                             color: var(--whiteColor);
                             background-color: var(--primaryColor);
                         }
@@ -310,7 +310,7 @@
             .file-uploader {
                 outline: 0;
                 min-height: 180px;
-                border-radius: 5px;
+                border-radius: var(--radius);
                 border: 1px solid #f5f7fa;
                 background-color: #f5f7fa;
 
@@ -360,7 +360,7 @@
                     }
                 }
                 .mat-mdc-text-field-wrapper {
-                    border-radius: 10px;
+                    border-radius: var(--radius);
                     padding: 0 15px 0 60px;
                     border: 1px solid #f5f7fa;
                 }
@@ -395,7 +395,7 @@
                 }
                 input[type="file"] {
                     border: 1px solid #f5f7fa;
-                    border-radius: 10px;
+                    border-radius: var(--radius);
                     padding: 15px 25px;
                     cursor: pointer;
                     display: block;
@@ -608,7 +608,7 @@
     max-width: 300px !important;
     min-width: 170px !important;
     overflow: hidden !important;
-    border-radius: 6px !important;
+    border-radius: var(--radius);
     background-color: var(--whiteColor) !important;
     box-shadow: 0px 4px 20px 0px rgba(47, 143, 232, 0.07) !important;
 
@@ -639,7 +639,7 @@
 // Mat Select
 .mat-mdc-select-panel {
     padding: 10px 0 !important;
-    border-radius: 6px !important;
+    border-radius: var(--radius);
     box-shadow: 0px 4px 20px 0px rgba(47, 143, 232, 0.07) !important;
 
     .mat-mdc-option {
@@ -697,7 +697,7 @@
                 border: 0;
             }
             .mdc-text-field {
-                border-radius: 0;
+                border-radius: var(--radius);
                 padding: {
                     left: 0;
                     right: 0;
@@ -746,13 +746,13 @@
             border: 1px solid #e2e8f0;
             color: var(--blackColor);
             padding: 5.5px 0 0 0;
-            border-radius: 4px;
+            border-radius: var(--radius);
             margin-left: 5px;
             height: 38px;
             width: 32px;
 
             .mat-mdc-button-persistent-ripple {
-                border-radius: 4px;
+                border-radius: var(--radius);
             }
             .mat-mdc-paginator-icon {
                 fill: var(--blackColor);
@@ -777,7 +777,7 @@
                 width: 32px;
                 height: 38px;
                 min-width: auto;
-                border-radius: 4px;
+                border-radius: var(--radius);
                 color: var(--blackColor);
                 font-size: var(--fontSize);
                 border: 1px solid #e2e8f0;
@@ -812,7 +812,7 @@
     --pagination-bg: var(--body-bg);
     --pagination-border-width: var(--border-width);
     --pagination-border-color: var(--border-color);
-    --pagination-border-radius: var(--border-radius);
+    --pagination-border-radius: var(--radius);
     --pagination-hover-color: var(--link-hover-color);
     --pagination-hover-bg: var(--tertiary-bg);
     --pagination-hover-border-color: var(--border-color);
@@ -831,7 +831,7 @@
     --body-bg: var(--whietColor);
     --border-width: 1px;
     --border-color: #dee2e6;
-    --border-radius: 0.375rem;
+    --border-radius: var(--radius);
     --link-hover-color: var(--primaryColor);
     --tertiary-bg: #f8f9fa;
 
@@ -889,7 +889,7 @@
     --alert-color: inherit;
     --alert-border-color: transparent;
     --alert-border: var(--border-width) solid var(--alert-border-color);
-    --alert-border-radius: 0.375rem;
+    --alert-border-radius: var(--radius);
     --alert-link-color: inherit;
     position: relative;
     padding: var(--alert-padding-y) var(--alert-padding-x);
@@ -897,7 +897,7 @@
     color: var(--alert-color);
     background-color: var(--alert-bg);
     border: var(--alert-border);
-    border-radius: var(--alert-border-radius);
+    border-radius: var(--radius);
     --primary-text: var(--primaryColor);
     --secondary-text: #6c757d;
     --success-text: var(--successColor);
@@ -934,7 +934,7 @@
     --border-style: solid;
     --border-color: #dee2e6;
     --border-color-translucent: rgba(0, 0, 0, 0.175);
-    --border-radius: 0.375rem;
+    --border-radius: var(--radius);
     --border-radius-sm: 0.25rem;
     --border-radius-lg: 0.5rem;
     --border-radius-xl: 1rem;
@@ -1105,7 +1105,7 @@
     --badge-font-size: 13px;
     --badge-font-weight: 600;
     --badge-color: #fff;
-    --badge-border-radius: 0.375rem;
+    --badge-border-radius: var(--radius);
     display: inline-block;
     padding: var(--badge-padding-y) var(--badge-padding-x);
     font-size: var(--badge-font-size);
@@ -1115,7 +1115,7 @@
     text-align: center;
     white-space: nowrap;
     vertical-align: baseline;
-    border-radius: var(--badge-border-radius);
+    border-radius: var(--radius);
 }
 .text-bg-primary {
     color: #fff!important;
@@ -1220,7 +1220,7 @@
     --breadcrumb-padding-y: 0;
     --breadcrumb-margin-bottom: 1rem;
     --breadcrumb-bg: ;
-    --breadcrumb-border-radius: ;
+    --breadcrumb-border-radius: var(--radius);
     --breadcrumb-divider-color: var(--secondary-color);
     --breadcrumb-item-padding-x: 0.5rem;
     --breadcrumb-item-active-color: var(--blackColor);
@@ -1231,7 +1231,7 @@
     font-size: var(--breadcrumb-font-size);
     list-style: none;
     background-color: var(--breadcrumb-bg);
-    border-radius: var(--breadcrumb-border-radius);
+    border-radius: var(--radius);
     --secondary-color: rgba(33, 37, 41, 0.40);
     --link-color: var(--primaryColor);
 }

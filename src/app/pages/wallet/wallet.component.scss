@@ -1,0 +1,124 @@
+.wallet-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  margin-bottom: 16px;
+
+  span,
+  small {
+    display: block;
+    color: var(--ui-text-muted);
+  }
+
+  strong {
+    display: block;
+    margin: 8px 0 4px;
+    color: var(--ui-text-strong);
+    font-size: 34px;
+    font-weight: 500;
+  }
+
+  > i {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 54px;
+    height: 54px;
+    border-radius: var(--radius);
+    background: var(--action-save-bg);
+    color: var(--action-save-text);
+    font-size: 28px;
+    line-height: 1;
+  }
+}
+
+.section-title {
+  margin-bottom: 14px;
+
+  h2 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 500;
+  }
+}
+
+.empty-wallet {
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  padding: 32px 18px;
+  border: 1px dashed var(--ui-border-input);
+  border-radius: var(--radius);
+  background: var(--ui-surface-muted);
+  text-align: center;
+
+  i {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 42px;
+    height: 42px;
+    border-radius: var(--radius);
+    background: var(--action-filter-bg);
+    color: var(--action-filter-text);
+    font-size: 22px;
+  }
+
+  strong {
+    color: var(--ui-text-strong);
+    font-size: 16px;
+    font-weight: 500;
+  }
+
+  span {
+    color: var(--ui-text-muted);
+  }
+}
+
+.movement-list {
+  display: grid;
+  gap: 10px;
+}
+
+.movement-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 12px;
+  border: 1px solid var(--ui-border-soft);
+  border-radius: var(--radius);
+  background: var(--ui-surface-muted);
+
+  strong,
+  span {
+    display: block;
+  }
+
+  strong {
+    color: var(--ui-text-strong);
+    font-weight: 500;
+  }
+
+  span {
+    margin-top: 4px;
+    color: var(--ui-text-muted);
+  }
+
+  .credit {
+    color: var(--action-save-text);
+  }
+
+  .debit {
+    color: var(--action-delete-text);
+  }
+}
+
+@media (max-width: 700px) {
+  .wallet-summary,
+  .movement-row {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}

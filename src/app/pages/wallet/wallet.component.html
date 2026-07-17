@@ -1,0 +1,46 @@
+<div class="page">
+  <div class="page-head">
+    <div>
+      <h1>Portafogli</h1>
+      <p>Controlla i crediti in euro disponibili e i movimenti accreditati dal backoffice.</p>
+    </div>
+  </div>
+
+  <div *ngIf="message" class="card card-pad">{{ message }}</div>
+  <div *ngIf="isLoading" class="card card-pad">Caricamento portafogli...</div>
+
+  <ng-container *ngIf="!isLoading && wallet">
+    <section class="wallet-summary card card-pad">
+      <div>
+        <span>Saldo disponibile</span>
+        <strong>{{ formatCurrency(wallet.balance) }}</strong>
+        <small>Valuta EUR</small>
+      </div>
+      <i class="ri-wallet-3-line"></i>
+    </section>
+
+    <section class="card card-pad">
+      <div class="section-title">
+        <h2>Movimenti</h2>
+      </div>
+
+      <div class="empty-wallet" *ngIf="!wallet.movements.length">
+        <i class="ri-wallet-line"></i>
+        <strong>Nessun credito disponibile</strong>
+        <span>I crediti approvati dal backoffice compariranno qui.</span>
+      </div>
+
+      <div class="movement-list" *ngIf="wallet.movements.length">
+        <div class="movement-row" *ngFor="let item of wallet.movements">
+          <div>
+            <strong>{{ movementLabel(item) }}</strong>
+            <span>{{ item.description || 'Credito portafogli' }} - {{ formatDate(item.createdAt) }}</span>
+          </div>
+          <strong [class.credit]="item.type === 'credit'" [class.debit]="item.type === 'debit'">
+            {{ movementSign(item) }}{{ formatCurrency(item.amount) }}
+          </strong>
+        </div>
+      </div>
+    </section>
+  </ng-container>
+</div>

@@ -26,8 +26,10 @@ export class CoursesComponent {
   subscribers: CourseBooking[] = [];
   clients: User[] = [];
   message = '';
+  messageType: 'success' | 'warning' | 'delete' = 'warning';
   courseFormError = '';
   isLoading = true;
+  isSubscriberFormOpen = false;
   pendingDelete: { type: 'course'; item: Course } | { type: 'subscriber'; item: CourseBooking } | null = null;
 
   courseForm = this.fb.group({
@@ -75,6 +77,7 @@ export class CoursesComponent {
         this.isLoading = false;
       },
       error: () => {
+        this.messageType = 'warning';
         this.message = 'Corsi non disponibili.';
         this.isLoading = false;
       },
@@ -90,6 +93,11 @@ export class CoursesComponent {
   useBooking(booking: Booking): void {
     if (this.hasCourseForBooking(booking._id)) {
       this.courseFormError = 'Questa prenotazione ha gia un corso. Puoi modificarlo dalla sezione Corsi creati.';
+      return;
+    }
+
+    if (!this.canSelectBookingForCourse(booking)) {
+      this.courseFormError = this.courseCreationWindowMessage(booking);
       return;
     }
 
@@ -130,6 +138,7 @@ export class CoursesComponent {
   editCourse(course: Course): void {
     this.courseFormError = '';
     this.selectedCourse = course;
+    this.closeSubscriberForm();
     this.courseForm.patchValue({
       id: course._id,
       booking: typeof course.booking === 'string' ? course.booking : course.booking._id,
@@ -162,6 +171,11 @@ export class CoursesComponent {
       return;
     }
 
+    if (!raw.id && !this.canSelectBookingForCourse(booking)) {
+      this.courseFormError = this.courseCreationWindowMessage(booking);
+      return;
+    }
+
     if (raw.enrollmentType === 'paid' && Number(raw.price || 0) <= 0) {
       this.courseFormError = 'Inserisci un prezzo maggiore di zero per il corso a pagamento.';
       return;
@@ -186,9 +200,11 @@ export class CoursesComponent {
 
     request.subscribe({
       next: (course) => {
+        this.messageType = 'success';
         this.message = 'Corso salvato.';
         this.courseFormError = '';
         this.selectedCourse = course;
+        this.isSubscriberFormOpen = false;
         this.load();
         this.loadSubscribers(course);
       },
@@ -205,14 +221,17 @@ export class CoursesComponent {
   deleteCourse(course: Course): void {
     this.api.deleteCourse(course._id).subscribe({
       next: () => {
+        this.messageType = 'delete';
         this.message = 'Corso eliminato.';
         this.pendingDelete = null;
         this.selectedCourse = null;
         this.subscribers = [];
+        this.closeSubscriberForm();
         this.courseForm.reset({ capacity: 10, enrollmentType: 'free', price: 0, isPublished: true });
         this.load();
       },
       error: (error) => {
+        this.messageType = 'warning';
         this.message = error?.error?.message || 'Corso non eliminato.';
       },
     });
@@ -229,6 +248,20 @@ export class CoursesComponent {
     });
   }
 
+  toggleSubscriberForm(): void {
+    this.isSubscriberFormOpen = !this.isSubscriberFormOpen;
+  }
+
+  closeSubscriberForm(): void {
+    this.isSubscriberFormOpen = false;
+    this.resetSubscriberForm();
+  }
+
+  resetSubscriberForm(): void {
+    this.subscriberForm.reset();
+    this.clients = [];
+  }
+
   searchClients(): void {
     const search = this.subscriberForm.value.search || '';
     if (search.length < 2) {
@@ -243,6 +276,7 @@ export class CoursesComponent {
 
   addSubscriber(): void {
     if (!this.selectedCourse) {
+      this.messageType = 'warning';
       this.message = 'Seleziona o salva prima un corso.';
       return;
     }
@@ -251,12 +285,13 @@ export class CoursesComponent {
     const add = (userId: string) => {
       this.api.createCourseBooking(this.selectedCourse?._id || '', userId).subscribe({
         next: () => {
+          this.messageType = 'success';
           this.message = 'Iscritto aggiunto.';
-          this.subscriberForm.reset();
-          this.clients = [];
+          this.resetSubscriberForm();
           this.loadSubscribers(this.selectedCourse as Course);
         },
         error: (error) => {
+          this.messageType = 'warning';
           this.message = error?.error?.message || 'Iscritto non aggiunto.';
         },
       });
@@ -268,6 +303,7 @@ export class CoursesComponent {
     }
 
     if (!raw.email || !raw.name) {
+      this.messageType = 'warning';
       this.message = 'Seleziona un cliente o inserisci nome ed email.';
       return;
     }
@@ -281,6 +317,7 @@ export class CoursesComponent {
     }).subscribe({
       next: (user) => add(user._id || ''),
       error: (error) => {
+        this.messageType = 'warning';
         this.message = error?.error?.message || 'Cliente non creato.';
       },
     });
@@ -293,6 +330,7 @@ export class CoursesComponent {
   removeSubscriber(item: CourseBooking): void {
     this.api.removeCourseBooking(item._id).subscribe({
       next: () => {
+        this.messageType = 'delete';
         this.message = 'Iscritto eliminato.';
         this.pendingDelete = null;
         if (this.selectedCourse) {
@@ -300,6 +338,7 @@ export class CoursesComponent {
         }
       },
       error: () => {
+        this.messageType = 'warning';
         this.message = 'Iscritto non eliminato.';
       },
     });
@@ -352,6 +391,11 @@ export class CoursesComponent {
   }
 
   isBookingDisabledForForm(bookingId: string): boolean {
+    const booking = this.findBookingForCourse(bookingId);
+    if (booking && !this.canSelectBookingForCourse(booking)) {
+      return true;
+    }
+
     const currentCourseId = this.courseForm.getRawValue().id;
     if (!currentCourseId) {
       return this.hasCourseForBooking(bookingId);
@@ -359,6 +403,20 @@ export class CoursesComponent {
 
     const currentCourse = this.courses.find((course) => course._id === currentCourseId);
     return this.hasCourseForBooking(bookingId) && this.courseBookingId(currentCourse) !== bookingId;
+  }
+
+  canSelectBookingForCourse(booking: Booking): boolean {
+    const bookingStart = this.bookingStartDate(booking);
+    const advanceHours = this.courseCreationAdvanceHours(booking);
+    const creationDeadline = new Date(bookingStart.getTime() - (advanceHours * 60 * 60 * 1000));
+    const now = new Date();
+    return now <= creationDeadline;
+  }
+
+  courseCreationWindowMessage(booking: Booking): string {
+    const advanceHours = this.courseCreationAdvanceHours(booking);
+    const creationDeadline = new Date(this.bookingStartDate(booking).getTime() - (advanceHours * 60 * 60 * 1000));
+    return `Puoi creare il corso solo fino a ${advanceHours} ore prima dell'inizio: entro ${creationDeadline.toLocaleString('it-IT')}.`;
   }
 
   courseForBooking(bookingId: string): Course | undefined {
@@ -384,6 +442,17 @@ export class CoursesComponent {
     }
 
     return null;
+  }
+
+  private courseCreationAdvanceHours(booking: Booking): number {
+    return typeof booking.space === 'string' ? 2 : Number(booking.space?.courseCreationAdvanceHours ?? 2);
+  }
+
+  private bookingStartDate(booking: Booking): Date {
+    const date = new Date(booking.date);
+    const [hours, minutes] = booking.startTime.split(':').map(Number);
+    date.setHours(hours || 0, minutes || 0, 0, 0);
+    return date;
   }
 
   private courseValidationMessage(): string {
@@ -424,6 +493,16 @@ export class CoursesComponent {
 
   userEmail(item: CourseBooking): string {
     return typeof item.user === 'string' ? '-' : item.user?.email || '-';
+  }
+
+  paymentStatusLabel(status: CourseBooking['paymentStatus']): string {
+    const labels: Record<CourseBooking['paymentStatus'], string> = {
+      PENDING: 'In attesa',
+      PAID: 'Pagato',
+      FAILED: 'Non riuscito',
+      FREE: 'Gratuito',
+    };
+    return labels[status] || 'In attesa';
   }
 
   toDate(value: string | Date): Date {

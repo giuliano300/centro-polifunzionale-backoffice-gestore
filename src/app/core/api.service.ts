@@ -7,9 +7,11 @@ import {
   BookingWithPayments,
   Course,
   CourseBooking,
+  PaginatedBookings,
   Payment,
   Space,
   User,
+  WalletSummary,
 } from './models';
 import { AuthService } from './auth.service';
 
@@ -41,6 +43,16 @@ export class ApiService {
     return this.http.get<BookingWithPayments[]>(`${this.apiUrl}bookings`, { ...this.headers(), params });
   }
 
+  bookingsPage(filters: Record<string, string> = {}) {
+    let params = new HttpParams();
+    Object.entries(filters).forEach(([key, value]) => {
+      if (value) {
+        params = params.set(key, value);
+      }
+    });
+    return this.http.get<PaginatedBookings>(`${this.apiUrl}bookings`, { ...this.headers(), params });
+  }
+
   availability(spaceId: string, date: string, rentalMode: string, workstationQuantity = 1) {
     const params = new HttpParams()
       .set('spaceId', spaceId)
@@ -52,6 +64,10 @@ export class ApiService {
 
   createBooking(payload: Record<string, unknown>) {
     return this.http.post<Booking>(`${this.apiUrl}bookings`, payload, this.headers());
+  }
+
+  requestBookingCancellation(bookingId: string) {
+    return this.http.post<Booking>(`${this.apiUrl}bookings/${bookingId}/cancellation-request`, {}, this.headers());
   }
 
   payments(filters: Record<string, string> = {}) {
@@ -136,5 +152,17 @@ export class ApiService {
 
   createClient(payload: Partial<User> & { password: string }) {
     return this.http.post<User>(`${this.apiUrl}users`, { ...payload, role: 'cliente' }, this.headers());
+  }
+
+  wallet() {
+    return this.http.get<WalletSummary>(`${this.apiUrl}wallet`, this.headers());
+  }
+
+  profile() {
+    return this.http.get<User>(`${this.apiUrl}users/me`, this.headers());
+  }
+
+  updateProfile(payload: Partial<User> & { password?: string }) {
+    return this.http.put<User>(`${this.apiUrl}users/me`, payload, this.headers());
   }
 }

@@ -10,7 +10,15 @@
   <div *ngIf="isLoading" class="card card-pad">Caricamento spazi...</div>
 
   <section class="spaces-grid" *ngIf="!isLoading">
-    <mat-card *ngFor="let space of spaces" class="space-card" [class.selected]="selectedSpace?._id === space._id">
+    <mat-card
+      *ngFor="let space of spaces"
+      class="space-card"
+      role="button"
+      tabindex="0"
+      [class.selected]="selectedSpace?._id === space._id"
+      (click)="selectSpace(space)"
+      (keydown.enter)="selectSpace(space)"
+      (keydown.space)="selectSpace(space); $event.preventDefault()">
       <mat-card-content>
         <div class="space-head">
           <div>
@@ -39,7 +47,7 @@
           class="select-button"
           [class.action-filter]="selectedSpace?._id !== space._id"
           [class.action-primary]="selectedSpace?._id === space._id"
-          (click)="selectSpace(space)">
+          (click)="selectSpace(space); $event.stopPropagation()">
           <i [class]="selectedSpace?._id === space._id ? 'ri-check-line' : 'ri-arrow-right-line'"></i>
           <span>{{ selectedSpace?._id === space._id ? 'Selezionato' : 'Seleziona' }}</span>
         </button>

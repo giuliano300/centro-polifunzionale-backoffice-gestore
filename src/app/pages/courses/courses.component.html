@@ -6,7 +6,13 @@
     </div>
   </div>
 
-  <div *ngIf="message" class="card card-pad course-alert">{{ message }}</div>
+  <div
+    *ngIf="message"
+    class="card card-pad course-alert"
+    [class.success]="messageType === 'success'"
+    [class.delete]="messageType === 'delete'">
+    {{ message }}
+  </div>
   <div *ngIf="isLoading" class="card card-pad">Caricamento corsi...</div>
 
   <section class="courses-layout" *ngIf="!isLoading">
@@ -19,13 +25,16 @@
           mat-button
           class="booking-pick action-filter"
           *ngFor="let booking of paidBookings"
-          [class.booking-used]="hasCourseForBooking(booking._id)"
-          [disabled]="hasCourseForBooking(booking._id)"
+          [class.booking-used]="hasCourseForBooking(booking._id) || !canSelectBookingForCourse(booking)"
+          [disabled]="hasCourseForBooking(booking._id) || !canSelectBookingForCourse(booking)"
           (click)="useBooking(booking)">
           <i class="ri-calendar-check-line"></i>
           <span>
             {{ bookingName(booking) }}
             <small *ngIf="hasCourseForBooking(booking._id)">Corso gia creato</small>
+            <small *ngIf="!hasCourseForBooking(booking._id) && !canSelectBookingForCourse(booking)">
+              {{ courseCreationWindowMessage(booking) }}
+            </small>
           </span>
         </button>
       </div>
@@ -54,7 +63,7 @@
                   *ngFor="let booking of paidBookings"
                   [value]="booking._id"
                   [disabled]="isBookingDisabledForForm(booking._id)">
-                  {{ bookingName(booking) }}{{ isBookingDisabledForForm(booking._id) ? ' - corso gia creato' : '' }}
+                  {{ bookingName(booking) }}{{ hasCourseForBooking(booking._id) ? ' - corso gia creato' : '' }}{{ !hasCourseForBooking(booking._id) && !canSelectBookingForCourse(booking) ? ' - non ancora disponibile' : '' }}
                 </mat-option>
               </mat-select>
               <mat-error *ngIf="courseForm.controls.booking.touched && courseForm.controls.booking.invalid">
@@ -180,57 +189,101 @@
   </section>
 
   <section *ngIf="selectedCourse" class="card card-pad subscribers">
-    <div class="section-title">
+    <div class="section-title subscribers-head">
       <h2>Iscritti a {{ selectedCourse.title }}</h2>
+      <button mat-button class="action-primary" type="button" (click)="toggleSubscriberForm()">
+        <i [class]="isSubscriberFormOpen ? 'ri-close-line' : 'ri-user-add-line'"></i>
+        <span>{{ isSubscriberFormOpen ? 'Chiudi inserimento' : 'Aggiungi iscritto' }}</span>
+      </button>
     </div>
 
-    <form [formGroup]="subscriberForm" class="subscriber-form">
-      <mat-form-field appearance="outline">
-        <mat-label>Cerca cliente</mat-label>
-        <input matInput formControlName="search" (input)="searchClients()">
-      </mat-form-field>
-      <mat-form-field appearance="outline">
-        <mat-label>Cliente trovato</mat-label>
-        <mat-select formControlName="userId">
-          <mat-option value="">Nessuno</mat-option>
-          <mat-option *ngFor="let client of clients" [value]="client._id">{{ client.name }} - {{ client.email }}</mat-option>
-        </mat-select>
-      </mat-form-field>
-      <mat-form-field appearance="outline">
-        <mat-label>Nuovo nome</mat-label>
-        <input matInput formControlName="name">
-      </mat-form-field>
-      <mat-form-field appearance="outline">
-        <mat-label>Nuova email</mat-label>
-        <input matInput formControlName="email">
-      </mat-form-field>
-      <mat-form-field appearance="outline">
-        <mat-label>Telefono</mat-label>
-        <input matInput formControlName="phone">
-      </mat-form-field>
-      <mat-form-field appearance="outline">
-        <mat-label>Codice fiscale</mat-label>
-        <input matInput formControlName="taxCode">
-      </mat-form-field>
-      <button mat-button class="action-primary" type="button" (click)="addSubscriber()">
-        <i class="ri-user-add-line"></i>
-        <span>Aggiungi iscritto</span>
-      </button>
-    </form>
-
-    <div class="subscriber-list">
+    <div class="subscriber-list" *ngIf="subscribers.length; else noSubscribers">
       <div *ngFor="let item of subscribers" class="subscriber-row">
         <div>
           <strong>{{ userName(item) }}</strong>
           <span>{{ userEmail(item) }}</span>
         </div>
-        <span class="pill" [class]="item.paymentStatus">{{ item.paymentStatus }}</span>
+        <span class="pill" [class]="item.paymentStatus">{{ paymentStatusLabel(item.paymentStatus) }}</span>
         <button mat-button class="action-delete" (click)="askRemoveSubscriber(item)">
           <i class="ri-delete-bin-line"></i>
           <span>Elimina</span>
         </button>
       </div>
     </div>
+
+    <ng-template #noSubscribers>
+      <div class="empty-subscribers">
+        <i class="ri-user-line"></i>
+        <strong>Nessun iscritto al corso</strong>
+        <span>Quando aggiungi un cliente comparira in questa lista.</span>
+      </div>
+    </ng-template>
+
+    <form *ngIf="isSubscriberFormOpen" [formGroup]="subscriberForm" class="subscriber-form-panel">
+      <div class="subscriber-panel-title">
+        <i class="ri-user-add-line"></i>
+        <div>
+          <strong>Aggiungi iscritto</strong>
+          <span>Scegli un cliente esistente oppure crea e inserisci un nuovo cliente.</span>
+        </div>
+      </div>
+
+      <div class="subscriber-form">
+        <div class="subscriber-method">
+          <div class="method-title">
+            <i class="ri-search-line"></i>
+            <span>Cliente esistente</span>
+          </div>
+          <mat-form-field appearance="outline">
+            <mat-label>Cerca per email, telefono o codice fiscale</mat-label>
+            <input matInput formControlName="search" (input)="searchClients()">
+          </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>Cliente trovato</mat-label>
+            <mat-select formControlName="userId">
+              <mat-option value="">Nessuno</mat-option>
+              <mat-option *ngFor="let client of clients" [value]="client._id">{{ client.name }} - {{ client.email }}</mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
+
+        <div class="subscriber-method">
+          <div class="method-title">
+            <i class="ri-user-add-line"></i>
+            <span>Crea e inserisci nuovo cliente</span>
+          </div>
+          <div class="new-client-grid">
+            <mat-form-field appearance="outline">
+              <mat-label>Nome e cognome</mat-label>
+              <input matInput formControlName="name">
+            </mat-form-field>
+            <mat-form-field appearance="outline">
+              <mat-label>Email</mat-label>
+              <input matInput formControlName="email">
+            </mat-form-field>
+            <mat-form-field appearance="outline">
+              <mat-label>Telefono</mat-label>
+              <input matInput formControlName="phone">
+            </mat-form-field>
+            <mat-form-field appearance="outline">
+              <mat-label>Codice fiscale</mat-label>
+              <input matInput formControlName="taxCode">
+            </mat-form-field>
+          </div>
+        </div>
+      </div>
+
+      <div class="subscriber-form-actions">
+        <button mat-button class="action-cancel" type="button" (click)="closeSubscriberForm()">
+          <i class="ri-close-line"></i>
+          <span>Annulla</span>
+        </button>
+        <button mat-button class="action-primary" type="button" (click)="addSubscriber()">
+          <i class="ri-user-add-line"></i>
+          <span>Aggiungi iscritto</span>
+        </button>
+      </div>
+    </form>
   </section>
 
   <div class="confirm-backdrop" *ngIf="pendingDelete" (click)="cancelDelete()">

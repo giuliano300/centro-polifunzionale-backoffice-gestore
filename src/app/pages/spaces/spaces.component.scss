@@ -8,6 +8,7 @@
   position: relative;
   overflow: hidden;
   border-width: 1px !important;
+  cursor: pointer;
   transition: var(--transition);
 
   &::before {
@@ -21,6 +22,11 @@
   &:hover {
     transform: translateY(-2px);
     box-shadow: 0 18px 42px var(--ui-shadow-hover) !important;
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--action-filter-border-strong);
+    outline-offset: 3px;
   }
 
   &.selected {
@@ -61,7 +67,7 @@
   width: fit-content;
   min-height: 30px;
   padding: 5px 10px;
-  border-radius: 999px;
+  border-radius: var(--radius);
   background: var(--action-filter-bg);
   color: var(--action-filter-text);
   font-size: 12px;
@@ -79,7 +85,7 @@
   margin: 18px 0;
   padding: 12px;
   border: 1px solid var(--ui-border-soft);
-  border-radius: 8px;
+  border-radius: var(--radius);
   background: var(--ui-surface-muted);
   color: var(--ui-text);
   font-weight: 500;
@@ -126,7 +132,7 @@
 .calendar-panel {
   padding: 14px;
   border: 1px solid var(--ui-border-soft);
-  border-radius: 8px;
+  border-radius: var(--radius);
   background: var(--ui-surface-muted);
 
   ::ng-deep .mat-calendar {
@@ -200,7 +206,7 @@
 .empty-slots {
   padding: 14px;
   border: 1px dashed var(--action-warning-border);
-  border-radius: 8px;
+  border-radius: var(--radius);
   background: var(--action-warning-bg-soft);
   color: var(--action-warning-text);
   font-weight: 500;
@@ -234,7 +240,7 @@
   overflow: auto;
   padding: 20px;
   border: 1px solid var(--ui-border-panel);
-  border-radius: 8px;
+  border-radius: var(--radius);
   background: var(--ui-surface);
   box-shadow: 0 26px 70px rgba(15, 23, 42, 0.18);
 }
@@ -288,7 +294,7 @@
     gap: 5px;
     padding: 14px;
     border: 1px solid var(--ui-border-soft);
-    border-radius: 8px;
+    border-radius: var(--radius);
     background: var(--ui-surface-muted);
   }
 
@@ -309,7 +315,7 @@
 .modal-message {
   margin-bottom: 16px;
   padding: 12px 14px;
-  border-radius: 8px;
+  border-radius: var(--radius);
   background: var(--action-filter-bg-soft);
   color: var(--action-filter-text-strong);
   font-weight: 500;
