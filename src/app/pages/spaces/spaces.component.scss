@@ -193,6 +193,84 @@
   }
 }
 
+.slot-selection-help {
+  padding: 10px 12px;
+  border: 1px solid var(--action-filter-border);
+  border-radius: var(--radius);
+  background: var(--action-filter-bg-soft);
+  color: var(--action-filter-text);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.slot-range-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid #4f9f72;
+  border-radius: var(--radius);
+  background: var(--action-save-bg);
+
+  div {
+    display: grid;
+    gap: 4px;
+  }
+
+  span,
+  small {
+    color: var(--ui-text-muted);
+    font-size: 13px;
+  }
+
+  strong {
+    color: var(--ui-text-strong);
+    font-size: 16px;
+    font-weight: 500;
+  }
+
+}
+
+button.confirm-slots-button.mat-mdc-button {
+  flex: 0 0 auto;
+  min-height: 42px !important;
+  padding: 0 18px !important;
+  border: 1px solid #4f9f72 !important;
+  background-color: #4f9f72 !important;
+  background: #4f9f72 !important;
+  color: var(--ui-surface) !important;
+  font-size: 14px !important;
+  font-weight: 400 !important;
+  box-shadow: none;
+
+  i {
+    font-size: 18px;
+  }
+
+  &:hover {
+    background-color: #438b63 !important;
+    background: #438b63 !important;
+  }
+
+  .mdc-button__label,
+  i,
+  span {
+    color: var(--ui-surface) !important;
+  }
+
+}
+
+.slot-reset-row {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: -4px;
+
+  button {
+    font-size: 14px !important;
+  }
+}
+
 .simulate-payment-button {
   color: var(--action-warning-text) !important;
   background: var(--action-warning-bg) !important;
@@ -204,12 +282,14 @@
 }
 
 .empty-slots {
-  padding: 14px;
+  padding: var(--empty-state-padding);
   border: 1px dashed var(--action-warning-border);
   border-radius: var(--radius);
   background: var(--action-warning-bg-soft);
   color: var(--action-warning-text);
-  font-weight: 500;
+  font-size: var(--empty-state-title-size);
+  font-weight: var(--empty-state-title-weight);
+  text-align: center;
 }
 
 .payment-actions {
@@ -342,6 +422,38 @@
 
   .payment-actions {
     justify-content: flex-start;
+  }
+}
+
+.payment-breakdown {
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid var(--ui-border-soft);
+  border-radius: var(--radius);
+  background: var(--ui-surface-muted);
+
+  > span {
+    color: var(--ui-text-muted);
+    font-size: 12px;
+    font-weight: 500;
+    text-transform: uppercase;
+  }
+
+  > div {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  strong,
+  small {
+    padding: 6px 9px;
+    border-radius: var(--radius);
+    background: var(--ui-surface);
+    color: var(--ui-text-strong);
+    font-size: 13px;
+    font-weight: 500;
   }
 }
 

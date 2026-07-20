@@ -46,8 +46,8 @@
 .empty-wallet {
   display: grid;
   justify-items: center;
-  gap: 8px;
-  padding: 32px 18px;
+  gap: var(--empty-state-gap);
+  padding: var(--empty-state-padding);
   border: 1px dashed var(--ui-border-input);
   border-radius: var(--radius);
   background: var(--ui-surface-muted);
@@ -57,22 +57,23 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 42px;
-    height: 42px;
+    width: var(--empty-state-icon-size);
+    height: var(--empty-state-icon-size);
     border-radius: var(--radius);
     background: var(--action-filter-bg);
     color: var(--action-filter-text);
-    font-size: 22px;
+    font-size: var(--empty-state-icon-font-size);
   }
 
   strong {
     color: var(--ui-text-strong);
-    font-size: 16px;
-    font-weight: 500;
+    font-size: var(--empty-state-title-size);
+    font-weight: var(--empty-state-title-weight);
   }
 
   span {
     color: var(--ui-text-muted);
+    font-size: var(--empty-state-text-size);
   }
 }
 

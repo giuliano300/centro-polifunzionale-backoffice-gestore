@@ -36,6 +36,10 @@
             <i class="ri-time-line"></i>
             Frazione {{ formatCurrency(space.hourlyRate) }} / {{ space.timeSlotMinutes || 60 }} min
           </span>
+          <span *ngIf="space.rentalModes.includes('time')">
+            <i class="ri-stack-line"></i>
+            Max {{ space.maxConsecutiveTimeSlots || 1 }} fasce insieme
+          </span>
           <span *ngIf="space.rentalModes.includes('full_day')">
             <i class="ri-calendar-line"></i>
             Giornata {{ formatCurrency(space.dailyRate) }}
@@ -105,16 +109,39 @@
           </mat-form-field>
         </form>
 
+        <div class="slot-selection-help" *ngIf="isMultiSlotSelection() && availableSlots.length">
+          Puoi selezionare piu orari, ma solo consecutivi. Massimo {{ maxConsecutiveTimeSlots() }} fasce.
+        </div>
+
         <div class="slots" *ngIf="availableSlots.length">
           <button
             mat-button
             *ngFor="let slot of availableSlots"
-            [class.action-primary]="slot.available && form.value.startTime === slot.startTime"
-            [class.action-filter]="slot.available && form.value.startTime !== slot.startTime"
+            [class.action-primary]="slot.available && isSlotSelected(slot)"
+            [class.action-filter]="slot.available && !isSlotSelected(slot)"
             [class.action-cancel]="!slot.available"
             [disabled]="!slot.available"
             (click)="pickSlot(slot)">
             {{ slot.startTime }} - {{ slot.endTime }} - {{ formatCurrency(slot.amount) }}
+          </button>
+        </div>
+
+        <div class="slot-range-summary" *ngIf="isMultiSlotSelection() && availableSlots.length">
+          <div>
+            <span>Fasce selezionate</span>
+            <strong>{{ selectedSlotsLabel() }}</strong>
+            <small>Puoi prenotare fino a {{ maxConsecutiveTimeSlots() }} frazioni consecutive se sono tutte disponibili in agenda.</small>
+          </div>
+          <button mat-button class="confirm-slots-button" type="button" (click)="confirmSelectedTimeSlots()" [disabled]="!canConfirmSelectedSlots()">
+            <i class="ri-check-line"></i>
+            <span>Conferma fasce</span>
+          </button>
+        </div>
+
+        <div class="slot-reset-row" *ngIf="isMultiSlotSelection() && canConfirmSelectedSlots()">
+          <button mat-button class="action-cancel" type="button" (click)="resetSelectedSlots()">
+            <i class="ri-close-line"></i>
+            <span>Cancella selezione</span>
           </button>
         </div>
 
@@ -156,7 +183,7 @@
         </div>
         <div>
           <span>Importo</span>
-          <strong>{{ formatCurrency(selectedSlotAmount()) }}</strong>
+          <strong>{{ formatCurrency(confirmedBooking ? confirmedTotalAmount() : selectedSlotAmount()) }}</strong>
         </div>
       </div>
 
@@ -174,8 +201,17 @@
       </div>
 
       <div class="modal-payment" *ngIf="confirmedBooking">
-        <p>Completa il pagamento per finalizzare l'acquisto.</p>
-        <div class="payment-actions">
+        <div class="payment-breakdown">
+          <span>Ripartizione pagamento</span>
+          <div>
+            <strong>Totale {{ formatCurrency(confirmedTotalAmount()) }}</strong>
+            <small *ngIf="confirmedWalletAmount() > 0">Wallet {{ formatCurrency(confirmedWalletAmount()) }}</small>
+            <small>{{ hasExternalAmount() ? 'Residuo da pagare ' + formatCurrency(confirmedExternalAmount()) : 'Pagato interamente con wallet' }}</small>
+          </div>
+        </div>
+        <p *ngIf="hasExternalAmount()">Completa il pagamento residuo per finalizzare l'acquisto.</p>
+        <p *ngIf="!hasExternalAmount()">Non serve un pagamento esterno per questa prenotazione.</p>
+        <div class="payment-actions" *ngIf="hasExternalAmount()">
           <button mat-button class="simulate-payment-button" type="button" (click)="simulatePayment()" [disabled]="!!checkoutProvider || isSimulatingPayment">
             <i class="ri-flask-line"></i>
             <span>{{ isSimulatingPayment ? 'Simulazione...' : 'Simula pagamento' }}</span>

@@ -69,6 +69,14 @@ $trinta-theme: mat.define-theme((
     --mdc-filled-button-container-shape: var(--radius);
     --mdc-protected-button-container-shape: var(--radius);
     --mdc-outlined-button-container-shape: var(--radius);
+    --mdc-text-button-label-text-font: var(--fontFamily);
+    --mdc-filled-button-label-text-font: var(--fontFamily);
+    --mdc-protected-button-label-text-font: var(--fontFamily);
+    --mdc-outlined-button-label-text-font: var(--fontFamily);
+    --mat-text-button-label-text-font: var(--fontFamily);
+    --mat-filled-button-label-text-font: var(--fontFamily);
+    --mat-protected-button-label-text-font: var(--fontFamily);
+    --mat-outlined-button-label-text-font: var(--fontFamily);
     --fontSize: 14px;
     --app-bg: #f5f7fa;
     --ui-surface: #ffffff;
@@ -138,6 +146,13 @@ $trinta-theme: mat.define-theme((
     --tone-violet-accent: #8b5cf6;
     --tone-slate-text: #334155;
     --tone-slate-bg: #e2e8f0;
+    --empty-state-gap: 8px;
+    --empty-state-padding: 34px 18px;
+    --empty-state-icon-size: 42px;
+    --empty-state-icon-font-size: 22px;
+    --empty-state-title-size: 16px;
+    --empty-state-title-weight: 500;
+    --empty-state-text-size: 14px;
     --dashboard-bar-blue: #60a5fa;
     --sidebar-badge-success: #00b69b;
     --sidebar-primary-badge-bg: rgba(117, 127, 239, 0.1);
@@ -886,6 +901,20 @@ button.action-primary.mat-mdc-button {
   align-items: center;
   justify-content: center;
   gap: 8px;
+}
+
+button.mat-mdc-button,
+a.mat-mdc-button,
+.mat-mdc-button .mdc-button__label,
+.mat-mdc-unelevated-button .mdc-button__label,
+.mat-mdc-raised-button .mdc-button__label,
+.mat-mdc-outlined-button .mdc-button__label,
+.mat-mdc-button .mdc-button__label span,
+.mat-mdc-unelevated-button .mdc-button__label span,
+.mat-mdc-raised-button .mdc-button__label span,
+.mat-mdc-outlined-button .mdc-button__label span {
+  font-family: var(--fontFamily) !important;
+  font-weight: 400 !important;
 }
 
 .mat-mdc-button i,

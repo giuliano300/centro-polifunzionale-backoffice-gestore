@@ -80,6 +80,10 @@ export class ApiService {
     return this.http.get<Payment[]>(`${this.apiUrl}payments`, { ...this.headers(), params });
   }
 
+  bookingPayments(bookingId: string) {
+    return this.http.get<Payment[]>(`${this.apiUrl}payments/by-booking/${bookingId}`, this.headers());
+  }
+
   markBookingPaid(bookingId: string, amount?: number) {
     const payload: { amount?: number; method: string; transactionId: string } = {
       method: 'manual',

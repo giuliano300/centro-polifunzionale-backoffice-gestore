@@ -1,30 +1,30 @@
 <ng-container *ngIf="auth.isAuthenticated(); else publicPage">
-  <div class="app-shell">
+  <div class="app-shell" [class.sidebar-collapsed]="isSidebarCollapsed">
     <aside class="side">
       <div class="brand">
         <span class="brand-icon">
-          <img src="/images/logo.svg" alt="N'Agorà">
+          <img src="/images/logo.svg" alt="N'Agora">
         </span>
-        <div>
-          <span>N'Agorà</span>
-          <strong>Gestore</strong>
+        <div class="brand-copy">
+          <span>Area gestore</span>
+          <strong>{{ managerName }}</strong>
         </div>
       </div>
 
       <nav>
-        <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
+        <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" [matTooltip]="isSidebarCollapsed ? 'Dashboard' : ''" matTooltipPosition="right">
           <i class="ri-dashboard-line"></i>
           <span>Dashboard</span>
         </a>
-        <a routerLink="/spaces" routerLinkActive="active">
+        <a routerLink="/spaces" routerLinkActive="active" [matTooltip]="isSidebarCollapsed ? 'Spazi' : ''" matTooltipPosition="right">
           <i class="ri-building-4-line"></i>
           <span>Spazi</span>
         </a>
-        <a routerLink="/bookings" routerLinkActive="active">
+        <a routerLink="/bookings" routerLinkActive="active" [matTooltip]="isSidebarCollapsed ? 'Prenotazioni' : ''" matTooltipPosition="right">
           <i class="ri-calendar-check-line"></i>
           <span>Prenotazioni</span>
         </a>
-        <a routerLink="/courses" routerLinkActive="active">
+        <a routerLink="/courses" routerLinkActive="active" [matTooltip]="isSidebarCollapsed ? 'Corsi' : ''" matTooltipPosition="right">
           <i class="ri-graduation-cap-line"></i>
           <span>Corsi</span>
         </a>
@@ -32,7 +32,11 @@
     </aside>
 
     <header class="app-header">
-      <a mat-button routerLink="/wallet" routerLinkActive="active" class="header-icon" aria-label="Portafogli" matTooltip="Portafogli" matTooltipPosition="below">
+      <button mat-button class="header-icon menu-toggle" type="button" (click)="toggleSidebar()" [attr.aria-label]="isSidebarCollapsed ? 'Espandi menu' : 'Comprimi menu'" [matTooltip]="isSidebarCollapsed ? 'Espandi menu' : 'Comprimi menu'" matTooltipPosition="below">
+        <i [class]="isSidebarCollapsed ? 'ri-menu-unfold-line' : 'ri-menu-fold-line'"></i>
+      </button>
+
+      <a mat-button routerLink="/wallet" routerLinkActive="active" class="header-icon" aria-label="Wallet" matTooltip="Wallet" matTooltipPosition="below">
         <i class="ri-wallet-3-line"></i>
       </a>
 
@@ -64,6 +68,10 @@
     <main>
       <router-outlet></router-outlet>
     </main>
+
+    <footer class="app-footer">
+      <span>&copy; {{ currentYear }} N'Agorà. Tutti i diritti riservati.</span>
+    </footer>
   </div>
 </ng-container>
 

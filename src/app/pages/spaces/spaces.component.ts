@@ -9,7 +9,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { ApiService } from '../../core/api.service';
-import { AvailabilitySlot, Booking, Space } from '../../core/models';
+import { AvailabilitySlot, Booking, Payment, Space } from '../../core/models';
 
 @Component({
   selector: 'gestore-spaces',
@@ -29,6 +29,7 @@ export class SpacesComponent {
   availabilityLoaded = false;
   selectedDayIsOpen = true;
   confirmedBooking: Booking | null = null;
+  confirmedPayments: Payment[] = [];
   checkoutProvider = '';
   isSimulatingPayment = false;
   isBookingModalOpen = false;
@@ -64,6 +65,7 @@ export class SpacesComponent {
     this.selectedSpace = space;
     this.availableSlots = [];
     this.confirmedBooking = null;
+    this.confirmedPayments = [];
     this.checkoutProvider = '';
     this.isSimulatingPayment = false;
     this.isBookingModalOpen = false;
@@ -91,6 +93,7 @@ export class SpacesComponent {
       endTime: '',
     });
     this.confirmedBooking = null;
+    this.confirmedPayments = [];
     this.checkoutProvider = '';
     this.isSimulatingPayment = false;
     this.isBookingModalOpen = false;
@@ -110,6 +113,7 @@ export class SpacesComponent {
     this.availabilityLoaded = false;
     this.selectedDayIsOpen = true;
     this.availableSlots = [];
+    this.clearSlotSelection();
 
     this.api.availability(
       this.selectedSpace._id,
@@ -141,14 +145,38 @@ export class SpacesComponent {
       return;
     }
 
+    if (this.isMultiSlotSelection()) {
+      this.pickConsecutiveSlot(slot);
+      return;
+    }
+
     this.form.patchValue({
       startTime: slot.startTime,
       endTime: slot.endTime,
     });
     this.confirmedBooking = null;
+    this.confirmedPayments = [];
     this.checkoutProvider = '';
     this.isSimulatingPayment = false;
     this.isBookingModalOpen = true;
+  }
+
+  confirmSelectedTimeSlots(): void {
+    if (!this.canConfirmSelectedSlots()) {
+      this.message = 'Seleziona una o piu fasce consecutive disponibili.';
+      return;
+    }
+
+    this.confirmedBooking = null;
+    this.confirmedPayments = [];
+    this.checkoutProvider = '';
+    this.isSimulatingPayment = false;
+    this.isBookingModalOpen = true;
+  }
+
+  resetSelectedSlots(): void {
+    this.clearSlotSelection();
+    this.message = '';
   }
 
   closeBookingModal(): void {
@@ -181,7 +209,10 @@ export class SpacesComponent {
     this.api.createBooking(payload).subscribe({
       next: (booking) => {
         this.confirmedBooking = booking;
-        this.message = 'Prenotazione confermata. Ora puoi procedere con il pagamento.';
+        this.loadConfirmedPayments(booking._id);
+        this.message = booking.status === 'confirmed'
+          ? 'Prenotazione confermata e pagata con il wallet.'
+          : 'Prenotazione confermata. Ora puoi procedere con il pagamento residuo.';
         this.isSaving = false;
       },
       error: (error) => {
@@ -216,7 +247,7 @@ export class SpacesComponent {
 
     this.isSimulatingPayment = true;
     this.message = '';
-    this.api.markBookingPaid(this.confirmedBooking._id, this.selectedSlotAmount()).subscribe({
+    this.api.markBookingPaid(this.confirmedBooking._id, this.confirmedExternalAmount()).subscribe({
       next: () => {
         this.message = 'Pagamento simulato correttamente. La prenotazione risulta pagata.';
         this.isSimulatingPayment = false;
@@ -234,10 +265,30 @@ export class SpacesComponent {
   }
 
   selectedSlotAmount(): number {
-    const slot = this.availableSlots.find((item) =>
-      item.startTime === this.form.value.startTime && item.endTime === this.form.value.endTime
-    );
-    return slot?.amount || 0;
+    const selectedSlots = this.selectedSlots();
+    if (selectedSlots.length) {
+      return selectedSlots.reduce((total, slot) => total + (slot.amount || 0), 0);
+    }
+
+    return 0;
+  }
+
+  confirmedTotalAmount(): number {
+    const payment = this.confirmedPayment();
+    return payment?.totalAmount || this.selectedSlotAmount();
+  }
+
+  confirmedWalletAmount(): number {
+    return this.confirmedPayment()?.walletAmount || 0;
+  }
+
+  confirmedExternalAmount(): number {
+    const payment = this.confirmedPayment();
+    return payment?.externalAmount || payment?.amount || this.selectedSlotAmount();
+  }
+
+  hasExternalAmount(): boolean {
+    return this.confirmedExternalAmount() > 0;
   }
 
   formatDisplayDate(value?: Date | string | null): string {
@@ -246,6 +297,116 @@ export class SpacesComponent {
     }
 
     return new Date(value).toLocaleDateString('it-IT');
+  }
+
+  isMultiSlotSelection(): boolean {
+    return this.form.value.rentalMode === 'time' && this.maxConsecutiveTimeSlots() > 1;
+  }
+
+  maxConsecutiveTimeSlots(): number {
+    return Math.max(Number(this.selectedSpace?.maxConsecutiveTimeSlots || 1), 1);
+  }
+
+  isSlotSelected(slot: AvailabilitySlot): boolean {
+    return this.selectedSlots().some((item) => item.startTime === slot.startTime && item.endTime === slot.endTime);
+  }
+
+  canConfirmSelectedSlots(): boolean {
+    return !!this.form.value.startTime && !!this.form.value.endTime && this.selectedSlots().length > 0;
+  }
+
+  selectedSlotsLabel(): string {
+    const slots = this.selectedSlots();
+    if (!slots.length) {
+      return 'Nessuna fascia selezionata';
+    }
+
+    return `${slots[0].startTime} - ${slots[slots.length - 1].endTime}`;
+  }
+
+  private pickConsecutiveSlot(slot: AvailabilitySlot): void {
+    const clickedIndex = this.availableSlots.findIndex((item) => item.startTime === slot.startTime && item.endTime === slot.endTime);
+    if (clickedIndex < 0) {
+      return;
+    }
+
+    const currentSlots = this.selectedSlots();
+    if (!currentSlots.length) {
+      this.setSelectedSlots(clickedIndex, clickedIndex);
+      return;
+    }
+
+    if (currentSlots.length === 1 && currentSlots[0].startTime === slot.startTime && currentSlots[0].endTime === slot.endTime) {
+      this.clearSlotSelection();
+      return;
+    }
+
+    const startIndex = this.availableSlots.findIndex((item) => item.startTime === currentSlots[0].startTime);
+    const from = Math.min(startIndex, clickedIndex);
+    const to = Math.max(startIndex, clickedIndex);
+    const range = this.availableSlots.slice(from, to + 1);
+    if (range.length > this.maxConsecutiveTimeSlots()) {
+      this.message = `Puoi selezionare al massimo ${this.maxConsecutiveTimeSlots()} fasce consecutive.`;
+      return;
+    }
+
+    const isConsecutive = range.every((item, index) =>
+      item.available && (index === 0 || range[index - 1].endTime === item.startTime)
+    );
+
+    if (!isConsecutive) {
+      this.message = 'Puoi selezionare solo fasce consecutive disponibili.';
+      this.setSelectedSlots(clickedIndex, clickedIndex);
+      return;
+    }
+
+    this.message = '';
+    this.setSelectedSlots(from, to);
+  }
+
+  private selectedSlots(): AvailabilitySlot[] {
+    if (!this.form.value.startTime || !this.form.value.endTime) {
+      return [];
+    }
+
+    const startIndex = this.availableSlots.findIndex((item) => item.startTime === this.form.value.startTime);
+    const endIndex = this.availableSlots.findIndex((item) => item.endTime === this.form.value.endTime);
+    if (startIndex < 0 || endIndex < startIndex) {
+      return [];
+    }
+
+    return this.availableSlots.slice(startIndex, endIndex + 1).filter((item) => item.available);
+  }
+
+  private setSelectedSlots(from: number, to: number): void {
+    const first = this.availableSlots[from];
+    const last = this.availableSlots[to];
+    if (!first || !last) {
+      this.clearSlotSelection();
+      return;
+    }
+
+    this.form.patchValue({
+      startTime: first.startTime,
+      endTime: last.endTime,
+    });
+    this.confirmedBooking = null;
+    this.confirmedPayments = [];
+    this.checkoutProvider = '';
+    this.isSimulatingPayment = false;
+    this.isBookingModalOpen = false;
+  }
+
+  private clearSlotSelection(): void {
+    this.form.patchValue({
+      startTime: '',
+      endTime: '',
+    });
+    this.confirmedBooking = null;
+    this.confirmedPayments = [];
+    this.checkoutProvider = '';
+    this.isSimulatingPayment = false;
+    this.isBookingModalOpen = false;
   }
 
   private formatApiDate(value?: Date | string | null): string {
@@ -267,5 +428,22 @@ export class SpacesComponent {
     const date = new Date();
     date.setHours(0, 0, 0, 0);
     return date;
+  }
+
+  private loadConfirmedPayments(bookingId: string): void {
+    this.api.bookingPayments(bookingId).subscribe({
+      next: (payments) => {
+        this.confirmedPayments = payments;
+      },
+      error: () => {
+        this.confirmedPayments = [];
+      },
+    });
+  }
+
+  private confirmedPayment(): Payment | undefined {
+    return this.confirmedPayments.find((payment) => payment.status === 'PAID')
+      || this.confirmedPayments.find((payment) => payment.status === 'PENDING')
+      || this.confirmedPayments[0];
   }
 }

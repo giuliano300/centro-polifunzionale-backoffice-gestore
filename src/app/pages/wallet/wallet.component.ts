@@ -27,7 +27,7 @@ export class WalletComponent {
         this.isLoading = false;
       },
       error: () => {
-        this.message = 'Portafogli non disponibile.';
+        this.message = 'Wallet non disponibile.';
         this.isLoading = false;
       },
     });
@@ -45,6 +45,7 @@ export class WalletComponent {
     const labels: Record<WalletMovement['reason'], string> = {
       cancellation_refund: 'Credito da annullamento',
       booking_payment: 'Utilizzo su prenotazione',
+      course_payment: 'Utilizzo su corso',
       manual: 'Movimento manuale',
     };
     return labels[item.reason] || 'Movimento';

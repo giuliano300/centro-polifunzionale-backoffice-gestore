@@ -1,13 +1,13 @@
 <div class="page">
   <div class="page-head">
     <div>
-      <h1>Portafogli</h1>
+      <h1>Wallet</h1>
       <p>Controlla i crediti in euro disponibili e i movimenti accreditati dal backoffice.</p>
     </div>
   </div>
 
   <div *ngIf="message" class="card card-pad">{{ message }}</div>
-  <div *ngIf="isLoading" class="card card-pad">Caricamento portafogli...</div>
+  <div *ngIf="isLoading" class="card card-pad">Caricamento wallet...</div>
 
   <ng-container *ngIf="!isLoading && wallet">
     <section class="wallet-summary card card-pad">
@@ -34,7 +34,7 @@
         <div class="movement-row" *ngFor="let item of wallet.movements">
           <div>
             <strong>{{ movementLabel(item) }}</strong>
-            <span>{{ item.description || 'Credito portafogli' }} - {{ formatDate(item.createdAt) }}</span>
+            <span>{{ item.description || 'Credito wallet' }} - {{ formatDate(item.createdAt) }}</span>
           </div>
           <strong [class.credit]="item.type === 'credit'" [class.debit]="item.type === 'debit'">
             {{ movementSign(item) }}{{ formatCurrency(item.amount) }}

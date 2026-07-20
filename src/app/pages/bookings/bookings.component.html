@@ -4,6 +4,10 @@
       <h1>Le mie prenotazioni</h1>
       <p>Controlla gli spazi acquistati e completa i pagamenti.</p>
     </div>
+    <a mat-button routerLink="/spaces" class="action-primary">
+      <i class="ri-add-line"></i>
+      <span>Nuova prenotazione</span>
+    </a>
   </div>
 
   <div class="card card-pad">
@@ -52,6 +56,149 @@
   <div *ngIf="message" class="card card-pad">{{ message }}</div>
   <div *ngIf="isLoading" class="card card-pad">Caricamento prenotazioni...</div>
 
+  <div class="booking-calendar-grid" *ngIf="!isLoading">
+    <mat-card class="calendar-card">
+      <mat-card-content>
+        <div class="calendar-card-head">
+          <div>
+            <h2>Calendario prenotazioni</h2>
+            <p>Seleziona un giorno per filtrare la lista.</p>
+          </div>
+          <button mat-button class="action-cancel" type="button" *ngIf="selectedCalendarDate" (click)="clear()">
+            <i class="ri-close-line"></i>
+            <span>Rimuovi filtro</span>
+          </button>
+        </div>
+        <mat-calendar
+          [selected]="selectedCalendarDate"
+          [dateClass]="dateClass"
+          (selectedChange)="selectCalendarDate($event)">
+        </mat-calendar>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="calendar-summary-card">
+      <mat-card-content>
+        <div class="calendar-summary-title">
+          <span>{{ selectedCalendarDate ? formatDate(selectedCalendarDate) : 'Nessun giorno selezionato' }}</span>
+          <strong>{{ selectedCalendarDate ? selectedDayBookings().length : calendarBookings.length }}</strong>
+        </div>
+        <div class="calendar-summary-list" *ngIf="selectedCalendarDate && selectedDayBookings().length; else calendarHint">
+          <button
+            type="button"
+            class="calendar-summary-row"
+            [class.active]="selectedCalendarBooking?.booking?._id === item.booking._id"
+            *ngFor="let item of selectedDayBookings()"
+            (click)="selectCalendarBooking(item)">
+            <span>{{ item.booking.startTime }} / {{ item.booking.endTime }}</span>
+            <strong>{{ spaceName(item.booking) }}</strong>
+            <small>{{ bookingStatusLabel(item.booking.status) }}</small>
+          </button>
+        </div>
+        <div class="calendar-booking-detail" *ngIf="selectedCalendarBooking as detail">
+          <div class="calendar-detail-head">
+            <div>
+              <span>Dettaglio prenotazione</span>
+              <h3>{{ detail.booking.name }}</h3>
+            </div>
+            <strong>{{ formatCurrency(paymentAmount(detail)) }}</strong>
+          </div>
+          <div class="calendar-detail-grid">
+            <div>
+              <span>Spazio</span>
+              <strong>{{ spaceName(detail.booking) }}</strong>
+            </div>
+            <div>
+              <span>Data</span>
+              <strong>{{ formatDate(detail.booking.date) }}</strong>
+            </div>
+            <div>
+              <span>Orario</span>
+              <strong>{{ detail.booking.startTime }} / {{ detail.booking.endTime }}</strong>
+            </div>
+            <div>
+              <span>Acquisto</span>
+              <strong>{{ selectedBookingRentalLabel(detail) }}</strong>
+            </div>
+            <div>
+              <span>Stato</span>
+              <strong>{{ bookingStatusLabel(detail.booking.status) }}</strong>
+            </div>
+            <div>
+              <span>Pagamento</span>
+              <strong>{{ paymentStatusLabel(paymentStatus(detail)) }}</strong>
+            </div>
+          </div>
+          <div class="payment-split-box" *ngIf="walletPaymentAmount(detail) > 0 || externalPaymentAmount(detail) > 0">
+            <span>Ripartizione pagamento</span>
+            <div>
+              <small>Totale {{ formatCurrency(paymentAmount(detail)) }}</small>
+              <small *ngIf="walletPaymentAmount(detail) > 0">Wallet {{ formatCurrency(walletPaymentAmount(detail)) }}</small>
+              <small>{{ externalPaymentAmount(detail) > 0 ? 'Da pagare con carta/PayPal/Nexi ' + formatCurrency(externalPaymentAmount(detail)) : 'Nessuna quota esterna' }}</small>
+            </div>
+          </div>
+          <div class="calendar-course-box">
+            <ng-container *ngIf="courseForBooking(detail.booking._id) as course; else createCourseLink">
+              <div>
+                <span>Corso collegato</span>
+                <strong>{{ course.title }}</strong>
+                <small>{{ course.enrollmentType === 'paid' ? formatCurrency(course.price) : 'Gratuito' }}</small>
+              </div>
+              <a mat-button class="action-filter" [routerLink]="['/courses']" [queryParams]="{ courseId: course._id }">
+                <i class="ri-book-open-line"></i>
+                <span>Apri corso</span>
+              </a>
+            </ng-container>
+            <ng-template #createCourseLink>
+              <div>
+                <span>Corso</span>
+                <strong>Nessun corso creato</strong>
+                <small>{{ canCreateCourseFromBooking(detail) ? 'Puoi crearlo da questa prenotazione.' : courseAvailabilityMessage(detail) }}</small>
+              </div>
+              <a
+                *ngIf="canCreateCourseFromBooking(detail)"
+                mat-button
+                class="action-primary"
+                [routerLink]="['/courses']"
+                [queryParams]="{ bookingId: detail.booking._id }">
+                <i class="ri-add-circle-line"></i>
+                <span>Crea corso</span>
+              </a>
+            </ng-template>
+          </div>
+          <div class="calendar-detail-actions">
+            <button
+              *ngIf="canRequestCancellation(detail)"
+              mat-button
+              class="cancel-request-button"
+              type="button"
+              [disabled]="cancellingBookingId === detail.booking._id"
+              (click)="openCancellationDialog(detail)">
+              <i class="ri-close-circle-line"></i>
+              <span>Richiedi annullamento</span>
+            </button>
+            <button
+              *ngIf="isPayable(detail)"
+              mat-button
+              class="simulate-payment-button"
+              type="button"
+              [disabled]="payingBookingId === detail.booking._id"
+              (click)="markPaid(detail)">
+              <i class="ri-flask-line"></i>
+              <span>{{ payingBookingId === detail.booking._id && !checkoutProvider ? 'Simulazione...' : 'Simula pagamento' }}</span>
+            </button>
+          </div>
+        </div>
+        <ng-template #calendarHint>
+          <div class="calendar-empty">
+            <i class="ri-calendar-check-line"></i>
+            <span>{{ selectedCalendarDate ? 'Nessuna prenotazione in questo giorno.' : 'I giorni evidenziati hanno prenotazioni.' }}</span>
+          </div>
+        </ng-template>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
   <div class="empty-bookings card card-pad" *ngIf="!isLoading && !bookings.length">
     <i class="ri-calendar-check-line"></i>
     <strong>Nessuna prenotazione</strong>
@@ -75,6 +222,9 @@
         <div class="booking-foot">
           <span>{{ item.booking.rentalMode === 'full_day' ? 'Tutta la giornata' : 'A frazioni' }}</span>
           <strong>{{ formatCurrency(paymentAmount(item)) }}</strong>
+          <small class="payment-split-inline" *ngIf="walletPaymentAmount(item) > 0">
+            Wallet {{ formatCurrency(walletPaymentAmount(item)) }} · Esterno {{ formatCurrency(externalPaymentAmount(item)) }}
+          </small>
           <button
             *ngIf="canRequestCancellation(item)"
             mat-button
@@ -162,7 +312,7 @@
           potresti non ricevere un rimborso completo.
         </p>
         <p>
-          L importo rimborsato potra essere accreditato nel portafogli gestore e usato come credito disponibile
+          L importo rimborsato potra essere accreditato nel wallet gestore e usato come credito disponibile
           per successive operazioni. Il backoffice potra confermare l importo in euro o diminuirlo, mai aumentarlo.
         </p>
         <div class="cancel-modal-summary">

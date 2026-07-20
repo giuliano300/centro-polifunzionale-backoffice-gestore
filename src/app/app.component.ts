@@ -4,6 +4,8 @@ import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/rou
 import { MatButtonModule } from '@angular/material/button';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { AuthService } from './core/auth.service';
+import { ApiService } from './core/api.service';
+import { User } from './core/models';
 import { NotificationsService } from './core/notifications.service';
 
 @Component({
@@ -14,16 +16,39 @@ import { NotificationsService } from './core/notifications.service';
 })
 export class AppComponent {
   isNotificationsOpen = false;
+  isSidebarCollapsed = false;
+  manager: User | null = null;
+  currentYear = new Date().getFullYear();
 
-  constructor(public auth: AuthService, public notifications: NotificationsService, private router: Router) {
+  constructor(public auth: AuthService, public notifications: NotificationsService, private api: ApiService, private router: Router) {
     if (this.auth.isAuthenticated()) {
       this.notifications.connect();
+      this.loadManager();
     }
+  }
+
+  get managerName(): string {
+    return this.manager?.name || this.auth.payload()?.email || 'Gestore';
+  }
+
+  private loadManager(): void {
+    this.api.profile().subscribe({
+      next: (user) => {
+        this.manager = user;
+      },
+      error: () => {
+        this.manager = null;
+      },
+    });
   }
 
   logout(): void {
     this.notifications.disconnect();
     this.auth.logout();
+  }
+
+  toggleSidebar(): void {
+    this.isSidebarCollapsed = !this.isSidebarCollapsed;
   }
 
   toggleNotifications(): void {

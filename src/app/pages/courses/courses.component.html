@@ -15,7 +15,19 @@
   </div>
   <div *ngIf="isLoading" class="card card-pad">Caricamento corsi...</div>
 
-  <section class="courses-layout" *ngIf="!isLoading">
+  <section class="no-bookings-box card card-pad" *ngIf="!isLoading && !hasBookedSpaces">
+    <i class="ri-calendar-check-line"></i>
+    <h2>
+      Non hai ancora prenotato nessuno spazio.<br>
+      Non puoi creare corsi.
+    </h2>
+    <a mat-button class="action-primary" routerLink="/spaces">
+      <i class="ri-arrow-right-line"></i>
+      <span>Clicca qui per effettuare una prenotazione</span>
+    </a>
+  </section>
+
+  <section class="courses-layout" *ngIf="!isLoading && hasBookedSpaces">
     <div class="card card-pad">
       <div class="section-title">
         <h2>Prenotazioni pagate disponibili</h2>
@@ -150,7 +162,7 @@
     </div>
   </section>
 
-  <section class="card card-pad created-courses" *ngIf="!isLoading">
+  <section class="card card-pad created-courses" *ngIf="!isLoading && hasBookedSpaces">
     <div class="section-title">
       <h2>Corsi creati</h2>
     </div>
@@ -188,7 +200,7 @@
     </div>
   </section>
 
-  <section *ngIf="selectedCourse" class="card card-pad subscribers">
+  <section *ngIf="hasBookedSpaces && selectedCourse" class="card card-pad subscribers">
     <div class="section-title subscribers-head">
       <h2>Iscritti a {{ selectedCourse.title }}</h2>
       <button mat-button class="action-primary" type="button" (click)="toggleSubscriberForm()">
@@ -202,6 +214,12 @@
         <div>
           <strong>{{ userName(item) }}</strong>
           <span>{{ userEmail(item) }}</span>
+          <small *ngIf="totalSubscriberAmount(item) > 0">
+            Totale {{ formatCurrency(totalSubscriberAmount(item)) }}
+            <ng-container *ngIf="walletSubscriberAmount(item) > 0">
+              · Wallet {{ formatCurrency(walletSubscriberAmount(item)) }} · Esterno {{ formatCurrency(externalSubscriberAmount(item)) }}
+            </ng-container>
+          </small>
         </div>
         <span class="pill" [class]="item.paymentStatus">{{ paymentStatusLabel(item.paymentStatus) }}</span>
         <button mat-button class="action-delete" (click)="askRemoveSubscriber(item)">

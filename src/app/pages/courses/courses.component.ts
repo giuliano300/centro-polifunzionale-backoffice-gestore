@@ -1,5 +1,6 @@
 import { Component, inject } from '@angular/core';
 import { NgFor, NgIf } from '@angular/common';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { forkJoin } from 'rxjs';
 import { MatButtonModule } from '@angular/material/button';
@@ -14,7 +15,7 @@ import { Booking, BookingWithPayments, Course, CourseBooking, User } from '../..
 
 @Component({
   selector: 'gestore-courses',
-  imports: [NgIf, NgFor, ReactiveFormsModule, MatButtonModule, MatCardModule, MatDatepickerModule, MatNativeDateModule, MatFormFieldModule, MatInputModule, MatSelectModule],
+  imports: [NgIf, NgFor, RouterLink, ReactiveFormsModule, MatButtonModule, MatCardModule, MatDatepickerModule, MatNativeDateModule, MatFormFieldModule, MatInputModule, MatSelectModule],
   templateUrl: './courses.component.html',
   styleUrl: './courses.component.scss',
 })
@@ -29,6 +30,7 @@ export class CoursesComponent {
   messageType: 'success' | 'warning' | 'delete' = 'warning';
   courseFormError = '';
   isLoading = true;
+  hasBookedSpaces = true;
   isSubscriberFormOpen = false;
   pendingDelete: { type: 'course'; item: Course } | { type: 'subscriber'; item: CourseBooking } | null = null;
 
@@ -55,7 +57,7 @@ export class CoursesComponent {
     taxCode: [''],
   });
 
-  constructor(private api: ApiService) {
+  constructor(private api: ApiService, private route: ActivatedRoute) {
     this.courseForm.controls.date.disable();
     this.courseForm.controls.startTime.disable();
     this.courseForm.controls.endTime.disable();
@@ -70,11 +72,13 @@ export class CoursesComponent {
     }).subscribe({
       next: ({ courses, bookings }) => {
         this.courses = courses;
+        this.hasBookedSpaces = bookings.length > 0;
         this.paidBookings = bookings
           .filter((item) => item.payments.some((payment) => payment.status === 'PAID'))
           .map((item) => item.booking)
           .filter((booking) => new Date(booking.date) >= this.today());
         this.isLoading = false;
+        this.applyRouteSelection();
       },
       error: () => {
         this.messageType = 'warning';
@@ -423,6 +427,35 @@ export class CoursesComponent {
     return this.courses.find((course) => this.courseBookingId(course) === bookingId);
   }
 
+  private applyRouteSelection(): void {
+    const courseId = this.route.snapshot.queryParamMap.get('courseId');
+    const bookingId = this.route.snapshot.queryParamMap.get('bookingId');
+
+    if (courseId) {
+      const course = this.courses.find((item) => item._id === courseId);
+      if (course) {
+        this.editCourse(course);
+        this.message = '';
+      }
+      return;
+    }
+
+    if (!bookingId) {
+      return;
+    }
+
+    const existingCourse = this.courseForBooking(bookingId);
+    if (existingCourse) {
+      this.editCourse(existingCourse);
+      return;
+    }
+
+    const booking = this.findBookingForCourse(bookingId);
+    if (booking) {
+      this.useBooking(booking);
+    }
+  }
+
   private courseBookingId(course?: Course): string {
     if (!course) {
       return '';
@@ -503,6 +536,18 @@ export class CoursesComponent {
       FREE: 'Gratuito',
     };
     return labels[status] || 'In attesa';
+  }
+
+  totalSubscriberAmount(item: CourseBooking): number {
+    return item.totalAmount || ((item.amount || 0) + (item.walletAmount || 0));
+  }
+
+  walletSubscriberAmount(item: CourseBooking): number {
+    return item.walletAmount || 0;
+  }
+
+  externalSubscriberAmount(item: CourseBooking): number {
+    return item.externalAmount || item.amount || 0;
   }
 
   toDate(value: string | Date): Date {
