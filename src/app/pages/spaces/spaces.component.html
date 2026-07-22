@@ -2,7 +2,7 @@
   <div class="page-head">
     <div>
       <h1>Spazi disponibili</h1>
-      <p>Scegli uno spazio, verifica le fasce disponibili e crea la tua prenotazione.</p>
+      <p>Scegli uno spazio, verifica le fasce orarie disponibili e crea la tua prenotazione.</p>
     </div>
   </div>
 
@@ -38,7 +38,7 @@
           </span>
           <span *ngIf="space.rentalModes.includes('time')">
             <i class="ri-stack-line"></i>
-            Max {{ space.maxConsecutiveTimeSlots || 1 }} fasce insieme
+            Fasce orarie acquistabili in base al giorno
           </span>
           <span *ngIf="space.rentalModes.includes('full_day')">
             <i class="ri-calendar-line"></i>
@@ -107,34 +107,41 @@
             <mat-label>Postazioni</mat-label>
             <input matInput type="number" min="1" formControlName="workstationQuantity" (change)="loadAvailability()">
           </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Codice sconto</mat-label>
+            <input matInput formControlName="discountCode" placeholder="Opzionale">
+          </mat-form-field>
         </form>
 
         <div class="slot-selection-help" *ngIf="isMultiSlotSelection() && availableSlots.length">
-          Puoi selezionare piu orari, ma solo consecutivi. Massimo {{ maxConsecutiveTimeSlots() }} fasce.
+          Per il giorno selezionato puoi acquistare fino a {{ maxConsecutiveTimeSlots() }} fasce orarie consecutive.
         </div>
 
         <div class="slots" *ngIf="availableSlots.length">
           <button
-            mat-button
             *ngFor="let slot of availableSlots"
+            type="button"
+            class="slot-button"
             [class.action-primary]="slot.available && isSlotSelected(slot)"
             [class.action-filter]="slot.available && !isSlotSelected(slot)"
             [class.action-cancel]="!slot.available"
             [disabled]="!slot.available"
             (click)="pickSlot(slot)">
-            {{ slot.startTime }} - {{ slot.endTime }} - {{ formatCurrency(slot.amount) }}
+            <span class="slot-time">{{ slot.startTime }} - {{ slot.endTime }}</span>
+            <small class="slot-price">{{ formatCurrency(slot.amount) }}</small>
           </button>
         </div>
 
         <div class="slot-range-summary" *ngIf="isMultiSlotSelection() && availableSlots.length">
           <div>
-            <span>Fasce selezionate</span>
+            <span>Fasce orarie selezionate</span>
             <strong>{{ selectedSlotsLabel() }}</strong>
-            <small>Puoi prenotare fino a {{ maxConsecutiveTimeSlots() }} frazioni consecutive se sono tutte disponibili in agenda.</small>
+            <small>Limite del giorno selezionato: {{ maxConsecutiveTimeSlots() }} fasce orarie consecutive se disponibili in agenda.</small>
           </div>
           <button mat-button class="confirm-slots-button" type="button" (click)="confirmSelectedTimeSlots()" [disabled]="!canConfirmSelectedSlots()">
             <i class="ri-check-line"></i>
-            <span>Conferma fasce</span>
+            <span>Conferma fasce orarie</span>
           </button>
         </div>
 
@@ -146,7 +153,7 @@
         </div>
 
         <div class="empty-slots loading" *ngIf="isLoadingAvailability">
-          Caricamento fasce disponibili...
+          Caricamento fasce orarie disponibili...
         </div>
 
         <div class="empty-slots" *ngIf="availabilityLoaded && !isLoadingAvailability && !selectedDayIsOpen">
@@ -209,22 +216,22 @@
             <small>{{ hasExternalAmount() ? 'Residuo da pagare ' + formatCurrency(confirmedExternalAmount()) : 'Pagato interamente con wallet' }}</small>
           </div>
         </div>
-        <p *ngIf="hasExternalAmount()">Completa il pagamento residuo per finalizzare l'acquisto.</p>
-        <p *ngIf="!hasExternalAmount()">Non serve un pagamento esterno per questa prenotazione.</p>
+        <p *ngIf="hasExternalAmount()">Completa il pagamento aggiuntivo per finalizzare l'acquisto.</p>
+        <p *ngIf="!hasExternalAmount()">La prenotazione e gia coperta dal wallet.</p>
         <div class="payment-actions" *ngIf="hasExternalAmount()">
-          <button mat-button class="simulate-payment-button" type="button" (click)="simulatePayment()" [disabled]="!!checkoutProvider || isSimulatingPayment">
-            <i class="ri-flask-line"></i>
-            <span>{{ isSimulatingPayment ? 'Simulazione...' : 'Simula pagamento' }}</span>
+          <button *ngIf="isPaymentMethodAllowed('cash')" mat-button class="simulate-payment-button" type="button" (click)="payCash()" [disabled]="!!checkoutProvider || isSimulatingPayment">
+            <i class="ri-money-euro-circle-line"></i>
+            <span>{{ isSimulatingPayment ? 'Registrazione...' : 'Contanti' }}</span>
           </button>
-          <button mat-button class="action-primary" type="button" (click)="startCheckout('stripe')" [disabled]="!!checkoutProvider || isSimulatingPayment">
+          <button *ngIf="isPaymentMethodAllowed('stripe')" mat-button class="action-primary" type="button" (click)="startCheckout('stripe')" [disabled]="!!checkoutProvider || isSimulatingPayment">
             <i class="ri-bank-card-line"></i>
             <span>{{ checkoutProvider === 'stripe' ? 'Apertura...' : 'Stripe' }}</span>
           </button>
-          <button mat-button class="action-primary" type="button" (click)="startCheckout('paypal')" [disabled]="!!checkoutProvider || isSimulatingPayment">
+          <button *ngIf="isPaymentMethodAllowed('paypal')" mat-button class="action-primary" type="button" (click)="startCheckout('paypal')" [disabled]="!!checkoutProvider || isSimulatingPayment">
             <i class="ri-paypal-line"></i>
             <span>{{ checkoutProvider === 'paypal' ? 'Apertura...' : 'PayPal' }}</span>
           </button>
-          <button mat-button class="action-primary" type="button" (click)="startCheckout('nexi')" [disabled]="!!checkoutProvider || isSimulatingPayment">
+          <button *ngIf="isPaymentMethodAllowed('nexi')" mat-button class="action-primary" type="button" (click)="startCheckout('nexi')" [disabled]="!!checkoutProvider || isSimulatingPayment">
             <i class="ri-secure-payment-line"></i>
             <span>{{ checkoutProvider === 'nexi' ? 'Apertura...' : 'Nexi' }}</span>
           </button>

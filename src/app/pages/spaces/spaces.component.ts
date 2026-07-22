@@ -28,6 +28,7 @@ export class SpacesComponent {
   isLoadingAvailability = false;
   availabilityLoaded = false;
   selectedDayIsOpen = true;
+  availabilityMaxConsecutiveTimeSlots = 1;
   confirmedBooking: Booking | null = null;
   confirmedPayments: Payment[] = [];
   checkoutProvider = '';
@@ -42,6 +43,7 @@ export class SpacesComponent {
     startTime: [''],
     endTime: [''],
     workstationQuantity: [1, [Validators.required, Validators.min(1)]],
+    discountCode: [''],
   });
 
   constructor(private api: ApiService) {
@@ -71,6 +73,7 @@ export class SpacesComponent {
     this.isBookingModalOpen = false;
     this.availabilityLoaded = false;
     this.selectedDayIsOpen = true;
+    this.availabilityMaxConsecutiveTimeSlots = 1;
     const mode = space.rentalModes?.includes('time') ? 'time' : 'full_day';
     this.form.patchValue({
       date: this.form.value.date || this.today(),
@@ -100,6 +103,7 @@ export class SpacesComponent {
     this.availableSlots = [];
     this.availabilityLoaded = false;
     this.selectedDayIsOpen = true;
+    this.availabilityMaxConsecutiveTimeSlots = 1;
     this.loadAvailability();
   }
 
@@ -124,6 +128,7 @@ export class SpacesComponent {
       next: (availability) => {
         this.availableSlots = availability.slots;
         this.selectedDayIsOpen = availability.isOpen;
+        this.availabilityMaxConsecutiveTimeSlots = Math.max(Number(availability.maxConsecutiveTimeSlots || 1), 1);
         this.availabilityLoaded = true;
         this.isLoadingAvailability = false;
         if (availability.slots.length === 1 && this.form.value.rentalMode === 'full_day') {
@@ -163,7 +168,7 @@ export class SpacesComponent {
 
   confirmSelectedTimeSlots(): void {
     if (!this.canConfirmSelectedSlots()) {
-      this.message = 'Seleziona una o piu fasce consecutive disponibili.';
+      this.message = 'Seleziona una o piu fasce orarie consecutive disponibili.';
       return;
     }
 
@@ -204,6 +209,7 @@ export class SpacesComponent {
       rentalMode: this.form.value.rentalMode,
       rentalUnit: this.selectedSpace.rentalUnit,
       workstationQuantity: Number(this.form.value.workstationQuantity || 1),
+      discountCode: this.form.value.discountCode || undefined,
     };
 
     this.api.createBooking(payload).subscribe({
@@ -223,7 +229,7 @@ export class SpacesComponent {
   }
 
   startCheckout(provider: 'stripe' | 'paypal' | 'nexi'): void {
-    if (!this.confirmedBooking || this.checkoutProvider || this.isSimulatingPayment) {
+    if (!this.confirmedBooking || this.checkoutProvider || this.isSimulatingPayment || !this.isPaymentMethodAllowed(provider)) {
       return;
     }
 
@@ -240,24 +246,31 @@ export class SpacesComponent {
     });
   }
 
-  simulatePayment(): void {
-    if (!this.confirmedBooking || this.checkoutProvider || this.isSimulatingPayment) {
+  payCash(): void {
+    if (!this.confirmedBooking || this.checkoutProvider || this.isSimulatingPayment || !this.isPaymentMethodAllowed('cash')) {
       return;
     }
 
     this.isSimulatingPayment = true;
     this.message = '';
-    this.api.markBookingPaid(this.confirmedBooking._id, this.confirmedExternalAmount()).subscribe({
+    this.api.markBookingPaid(this.confirmedBooking._id, this.confirmedExternalAmount(), 'cash').subscribe({
       next: () => {
-        this.message = 'Pagamento simulato correttamente. La prenotazione risulta pagata.';
+        this.message = 'Pagamento in contanti registrato correttamente. La prenotazione risulta pagata.';
         this.isSimulatingPayment = false;
         this.isBookingModalOpen = false;
       },
       error: (error) => {
-        this.message = error?.error?.message || 'Pagamento simulato non riuscito.';
+        this.message = error?.error?.message || 'Pagamento in contanti non registrato.';
         this.isSimulatingPayment = false;
       },
     });
+  }
+
+  isPaymentMethodAllowed(method: 'cash' | 'stripe' | 'paypal' | 'nexi'): boolean {
+    const methods = this.selectedSpace?.paymentMethods?.length
+      ? this.selectedSpace.paymentMethods
+      : ['cash', 'stripe', 'paypal', 'nexi'];
+    return methods.includes(method);
   }
 
   formatCurrency(value?: number): string {
@@ -304,7 +317,7 @@ export class SpacesComponent {
   }
 
   maxConsecutiveTimeSlots(): number {
-    return Math.max(Number(this.selectedSpace?.maxConsecutiveTimeSlots || 1), 1);
+    return Math.max(Number(this.availabilityMaxConsecutiveTimeSlots || 1), 1);
   }
 
   isSlotSelected(slot: AvailabilitySlot): boolean {
@@ -346,7 +359,7 @@ export class SpacesComponent {
     const to = Math.max(startIndex, clickedIndex);
     const range = this.availableSlots.slice(from, to + 1);
     if (range.length > this.maxConsecutiveTimeSlots()) {
-      this.message = `Puoi selezionare al massimo ${this.maxConsecutiveTimeSlots()} fasce consecutive.`;
+      this.message = `Puoi selezionare al massimo ${this.maxConsecutiveTimeSlots()} fasce orarie consecutive.`;
       return;
     }
 
@@ -355,7 +368,7 @@ export class SpacesComponent {
     );
 
     if (!isConsecutive) {
-      this.message = 'Puoi selezionare solo fasce consecutive disponibili.';
+      this.message = 'Puoi selezionare solo fasce orarie consecutive disponibili.';
       this.setSelectedSlots(clickedIndex, clickedIndex);
       return;
     }

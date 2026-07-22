@@ -25,6 +25,7 @@ export class CoursesComponent {
   paidBookings: Booking[] = [];
   selectedCourse: Course | null = null;
   subscribers: CourseBooking[] = [];
+  allCourseBookings: CourseBooking[] = [];
   clients: User[] = [];
   message = '';
   messageType: 'success' | 'warning' | 'delete' = 'warning';
@@ -32,6 +33,12 @@ export class CoursesComponent {
   isLoading = true;
   hasBookedSpaces = true;
   isSubscriberFormOpen = false;
+  isSubscribersModalOpen = false;
+  bookingSearchTerm = '';
+  bookingRangeFilter: 'future' | 'week' | 'month' | 'all' = 'future';
+  showAllAvailableBookings = false;
+  coursesPage = 1;
+  coursesPageSize = 10;
   pendingDelete: { type: 'course'; item: Course } | { type: 'subscriber'; item: CourseBooking } | null = null;
 
   courseForm = this.fb.group({
@@ -55,6 +62,7 @@ export class CoursesComponent {
     email: [''],
     phone: [''],
     taxCode: [''],
+    discountCode: [''],
   });
 
   constructor(private api: ApiService, private route: ActivatedRoute) {
@@ -69,12 +77,16 @@ export class CoursesComponent {
     forkJoin({
       courses: this.api.courses(),
       bookings: this.api.bookings(),
+      courseBookings: this.api.courseBookings(),
     }).subscribe({
-      next: ({ courses, bookings }) => {
-        this.courses = courses;
+      next: ({ courses, bookings, courseBookings }) => {
+        this.courses = this.sortCoursesByDateDesc(courses);
+        this.ensureCoursesPageInRange();
+        this.allCourseBookings = courseBookings;
         this.hasBookedSpaces = bookings.length > 0;
         this.paidBookings = bookings
           .filter((item) => item.payments.some((payment) => payment.status === 'PAID'))
+          .filter((item) => item.booking.status !== 'cancelled' && item.booking.status !== 'cancellation_requested')
           .map((item) => item.booking)
           .filter((booking) => new Date(booking.date) >= this.today());
         this.isLoading = false;
@@ -119,6 +131,85 @@ export class CoursesComponent {
       price: 0,
       isPublished: true,
     });
+    this.selectedCourse = null;
+  }
+
+  setBookingSearchTerm(event: Event): void {
+    this.bookingSearchTerm = (event.target as HTMLInputElement).value;
+    this.showAllAvailableBookings = false;
+  }
+
+  setBookingRangeFilter(range: 'future' | 'week' | 'month' | 'all'): void {
+    this.bookingRangeFilter = range;
+    this.showAllAvailableBookings = false;
+  }
+
+  visiblePaidBookings(): Booking[] {
+    const normalizedSearch = this.bookingSearchTerm.trim().toLowerCase();
+    return this.paidBookings
+      .filter((booking) => this.matchesBookingRange(booking))
+      .filter((booking) => {
+        if (!normalizedSearch) {
+          return true;
+        }
+
+        const text = [
+          this.bookingName(booking),
+          this.spaceNameFromBooking(booking),
+          this.formatDate(booking.date),
+          booking.startTime,
+          booking.endTime,
+        ].join(' ').toLowerCase();
+        return text.includes(normalizedSearch);
+      })
+      .sort((first, second) => this.bookingStartDate(first).getTime() - this.bookingStartDate(second).getTime());
+  }
+
+  displayedPaidBookings(): Booking[] {
+    const bookings = this.visiblePaidBookings();
+    return this.showAllAvailableBookings ? bookings : bookings.slice(0, 6);
+  }
+
+  hiddenPaidBookingsCount(): number {
+    return Math.max(this.visiblePaidBookings().length - this.displayedPaidBookings().length, 0);
+  }
+
+  toggleAvailableBookings(): void {
+    this.showAllAvailableBookings = !this.showAllAvailableBookings;
+  }
+
+  displayedCourses(): Course[] {
+    const start = (this.coursesPage - 1) * this.coursesPageSize;
+    return this.courses.slice(start, start + this.coursesPageSize);
+  }
+
+  coursesTotalPages(): number {
+    return Math.max(Math.ceil(this.courses.length / this.coursesPageSize), 1);
+  }
+
+  coursesPageStart(): number {
+    if (!this.courses.length) {
+      return 0;
+    }
+    return (this.coursesPage - 1) * this.coursesPageSize + 1;
+  }
+
+  coursesPageEnd(): number {
+    return Math.min(this.coursesPage * this.coursesPageSize, this.courses.length);
+  }
+
+  previousCoursesPage(): void {
+    if (this.coursesPage <= 1) {
+      return;
+    }
+    this.coursesPage -= 1;
+  }
+
+  nextCoursesPage(): void {
+    if (this.coursesPage >= this.coursesTotalPages()) {
+      return;
+    }
+    this.coursesPage += 1;
   }
 
   syncBookingDetails(bookingId = this.courseForm.getRawValue().booking || ''): void {
@@ -157,6 +248,16 @@ export class CoursesComponent {
       isPublished: course.isPublished,
     });
     this.loadSubscribers(course);
+  }
+
+  openSubscribersModal(course: Course): void {
+    this.editCourse(course);
+    this.isSubscribersModalOpen = true;
+  }
+
+  closeSubscribersModal(): void {
+    this.isSubscribersModalOpen = false;
+    this.closeSubscriberForm();
   }
 
   saveCourse(): void {
@@ -245,6 +346,10 @@ export class CoursesComponent {
     this.api.courseBookings(course._id).subscribe({
       next: (subscribers) => {
         this.subscribers = subscribers;
+        this.allCourseBookings = [
+          ...this.allCourseBookings.filter((item) => this.courseBookingCourseId(item) !== course._id),
+          ...subscribers,
+        ];
       },
       error: () => {
         this.subscribers = [];
@@ -286,11 +391,11 @@ export class CoursesComponent {
     }
 
     const raw = this.subscriberForm.getRawValue();
-    const add = (userId: string) => {
-      this.api.createCourseBooking(this.selectedCourse?._id || '', userId).subscribe({
+    const add = (userId: string, successMessage = 'Iscritto aggiunto.') => {
+      this.api.createCourseBooking(this.selectedCourse?._id || '', userId, raw.discountCode || undefined).subscribe({
         next: () => {
           this.messageType = 'success';
-          this.message = 'Iscritto aggiunto.';
+          this.message = successMessage;
           this.resetSubscriberForm();
           this.loadSubscribers(this.selectedCourse as Course);
         },
@@ -312,17 +417,18 @@ export class CoursesComponent {
       return;
     }
 
-    this.api.createClient({
+    this.api.inviteClient({
       name: raw.name,
       email: raw.email,
       phone: raw.phone || undefined,
       taxCode: raw.taxCode || undefined,
-      password: 'Cliente123!',
     }).subscribe({
-      next: (user) => add(user._id || ''),
+      next: (invite) => {
+        add(invite.user._id || '', `Cliente invitato e iscritto. Link completamento: ${invite.completeUrl}`);
+      },
       error: (error) => {
         this.messageType = 'warning';
-        this.message = error?.error?.message || 'Cliente non creato.';
+        this.message = error?.error?.message || 'Invito cliente non creato.';
       },
     });
   }
@@ -386,7 +492,7 @@ export class CoursesComponent {
   }
 
   bookingName(booking: Booking): string {
-    const space = typeof booking.space === 'string' ? '-' : booking.space?.name || '-';
+    const space = this.spaceNameFromBooking(booking);
     return `${space} - ${this.formatDate(booking.date)} ${booking.startTime}`;
   }
 
@@ -410,6 +516,10 @@ export class CoursesComponent {
   }
 
   canSelectBookingForCourse(booking: Booking): boolean {
+    if (booking.status === 'cancelled' || booking.status === 'cancellation_requested') {
+      return false;
+    }
+
     const bookingStart = this.bookingStartDate(booking);
     const advanceHours = this.courseCreationAdvanceHours(booking);
     const creationDeadline = new Date(bookingStart.getTime() - (advanceHours * 60 * 60 * 1000));
@@ -418,6 +528,14 @@ export class CoursesComponent {
   }
 
   courseCreationWindowMessage(booking: Booking): string {
+    if (booking.status === 'cancelled') {
+      return 'Non puoi creare un corso per una prenotazione annullata.';
+    }
+
+    if (booking.status === 'cancellation_requested') {
+      return 'Non puoi creare un corso mentre la prenotazione e in richiesta di annullamento.';
+    }
+
     const advanceHours = this.courseCreationAdvanceHours(booking);
     const creationDeadline = new Date(this.bookingStartDate(booking).getTime() - (advanceHours * 60 * 60 * 1000));
     return `Puoi creare il corso solo fino a ${advanceHours} ore prima dell'inizio: entro ${creationDeadline.toLocaleString('it-IT')}.`;
@@ -425,6 +543,12 @@ export class CoursesComponent {
 
   courseForBooking(bookingId: string): Course | undefined {
     return this.courses.find((course) => this.courseBookingId(course) === bookingId);
+  }
+
+  courseSubscriberCount(course: Course): number {
+    return this.allCourseBookings.filter((item) => {
+      return this.courseBookingCourseId(item) === course._id && item.status !== 'cancelled';
+    }).length;
   }
 
   private applyRouteSelection(): void {
@@ -464,6 +588,10 @@ export class CoursesComponent {
     return typeof course.booking === 'string' ? course.booking : course.booking._id;
   }
 
+  private courseBookingCourseId(item: CourseBooking): string {
+    return typeof item.course === 'string' ? item.course : item.course._id;
+  }
+
   private findBookingForCourse(bookingId: string): Booking | null {
     const booking = this.paidBookings.find((item) => item._id === bookingId);
     if (booking) {
@@ -475,6 +603,49 @@ export class CoursesComponent {
     }
 
     return null;
+  }
+
+  private matchesBookingRange(booking: Booking): boolean {
+    if (this.bookingRangeFilter === 'all') {
+      return true;
+    }
+
+    const date = this.toDate(booking.date);
+    const today = this.today();
+    if (date.getTime() < today.getTime()) {
+      return false;
+    }
+
+    if (this.bookingRangeFilter === 'future') {
+      return true;
+    }
+
+    const end = new Date(today);
+    end.setDate(today.getDate() + (this.bookingRangeFilter === 'week' ? 7 : 30));
+    return date.getTime() <= end.getTime();
+  }
+
+  private spaceNameFromBooking(booking: Booking): string {
+    return typeof booking.space === 'string' ? '-' : booking.space?.name || '-';
+  }
+
+  private sortCoursesByDateDesc(courses: Course[]): Course[] {
+    return [...courses].sort((first, second) => {
+      return this.courseStartDate(second).getTime() - this.courseStartDate(first).getTime();
+    });
+  }
+
+  private courseStartDate(course: Course): Date {
+    const date = new Date(course.date);
+    const [hours, minutes] = course.startTime.split(':').map(Number);
+    date.setHours(hours || 0, minutes || 0, 0, 0);
+    return date;
+  }
+
+  private ensureCoursesPageInRange(): void {
+    if (this.coursesPage > this.coursesTotalPages()) {
+      this.coursesPage = this.coursesTotalPages();
+    }
   }
 
   private courseCreationAdvanceHours(booking: Booking): number {
@@ -548,6 +719,14 @@ export class CoursesComponent {
 
   externalSubscriberAmount(item: CourseBooking): number {
     return item.externalAmount || item.amount || 0;
+  }
+
+  subscriberPaymentMethodLabel(item: CourseBooking): string {
+    if (this.externalSubscriberAmount(item) <= 0) {
+      return 'Nessun pagamento aggiuntivo';
+    }
+
+    return item.paymentStatus === 'PAID' ? 'Pagamento registrato' : 'Pagamento da completare';
   }
 
   toDate(value: string | Date): Date {

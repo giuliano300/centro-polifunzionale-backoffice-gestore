@@ -10,70 +10,40 @@
     </a>
   </div>
 
-  <div class="card card-pad">
-    <form [formGroup]="filters" class="filters">
-      <mat-form-field appearance="outline">
-        <mat-label>Dal</mat-label>
-        <input matInput [matDatepicker]="bookingStartPicker" formControlName="start">
-        <mat-datepicker-toggle matSuffix [for]="bookingStartPicker">
-          <i class="ri-calendar-line" matDatepickerToggleIcon></i>
-        </mat-datepicker-toggle>
-        <mat-datepicker #bookingStartPicker></mat-datepicker>
-      </mat-form-field>
-      <mat-form-field appearance="outline">
-        <mat-label>Al</mat-label>
-        <input matInput [matDatepicker]="bookingEndPicker" formControlName="end">
-        <mat-datepicker-toggle matSuffix [for]="bookingEndPicker">
-          <i class="ri-calendar-line" matDatepickerToggleIcon></i>
-        </mat-datepicker-toggle>
-        <mat-datepicker #bookingEndPicker></mat-datepicker>
-      </mat-form-field>
-      <mat-form-field appearance="outline">
-        <mat-label>Stato</mat-label>
-        <mat-select formControlName="status">
-          <mat-option value="">Tutti</mat-option>
-          <mat-option value="pending">In attesa</mat-option>
-          <mat-option value="confirmed">Confermata</mat-option>
-          <mat-option value="cancellation_requested">Richiesta annullamento</mat-option>
-          <mat-option value="cancelled">Annullata</mat-option>
-        </mat-select>
-      </mat-form-field>
-      <mat-form-field appearance="outline">
-        <mat-label>Cerca</mat-label>
-        <input matInput formControlName="search">
-      </mat-form-field>
-      <button mat-button class="action-filter" type="button" (click)="applyFilters()">
-        <i class="ri-filter-3-line"></i>
-        <span>Filtra</span>
-      </button>
-      <button mat-button class="action-cancel" type="button" (click)="clear()">
-        <i class="ri-close-line"></i>
-        <span>Annulla</span>
-      </button>
-    </form>
-  </div>
-
   <div *ngIf="message" class="card card-pad">{{ message }}</div>
   <div *ngIf="isLoading" class="card card-pad">Caricamento prenotazioni...</div>
 
-  <div class="booking-calendar-grid" *ngIf="!isLoading">
+  <div class="booking-view-tabs" *ngIf="!isLoading">
+    <button mat-button type="button" [class.active]="viewMode === 'calendar'" (click)="setViewMode('calendar')">
+      <i class="ri-calendar-line"></i>
+      <span>Calendario</span>
+    </button>
+    <button mat-button type="button" [class.active]="viewMode === 'list'" (click)="setViewMode('list')">
+      <i class="ri-list-check"></i>
+      <span>Lista</span>
+    </button>
+  </div>
+
+  <div class="booking-calendar-grid" *ngIf="!isLoading && viewMode === 'calendar'">
     <mat-card class="calendar-card">
       <mat-card-content>
         <div class="calendar-card-head">
           <div>
             <h2>Calendario prenotazioni</h2>
-            <p>Seleziona un giorno per filtrare la lista.</p>
+            <p>Seleziona un giorno per vedere il dettaglio delle prenotazioni.</p>
           </div>
-          <button mat-button class="action-cancel" type="button" *ngIf="selectedCalendarDate" (click)="clear()">
-            <i class="ri-close-line"></i>
-            <span>Rimuovi filtro</span>
-          </button>
         </div>
         <mat-calendar
           [selected]="selectedCalendarDate"
           [dateClass]="dateClass"
           (selectedChange)="selectCalendarDate($event)">
         </mat-calendar>
+        <div class="calendar-bottom-actions" *ngIf="selectedCalendarDate">
+          <button mat-button class="action-cancel calendar-clear-button" type="button" (click)="clear()">
+            <i class="ri-close-line"></i>
+            <span>Deseleziona giorno</span>
+          </button>
+        </div>
       </mat-card-content>
     </mat-card>
 
@@ -88,14 +58,20 @@
             type="button"
             class="calendar-summary-row"
             [class.active]="selectedCalendarBooking?.booking?._id === item.booking._id"
+            [class.cancelled]="item.booking.status === 'cancelled'"
             *ngFor="let item of selectedDayBookings()"
             (click)="selectCalendarBooking(item)">
             <span>{{ item.booking.startTime }} / {{ item.booking.endTime }}</span>
             <strong>{{ spaceName(item.booking) }}</strong>
-            <small>{{ bookingStatusLabel(item.booking.status) }}</small>
+            <small class="status-badge" [class.cancelled]="item.booking.status === 'cancelled'">
+              {{ bookingStatusLabel(item.booking.status) }}
+            </small>
           </button>
         </div>
-        <div class="calendar-booking-detail" *ngIf="selectedCalendarBooking as detail">
+        <div
+          class="calendar-booking-detail"
+          [class.cancelled]="detail.booking.status === 'cancelled'"
+          *ngIf="selectedCalendarBooking as detail">
           <div class="calendar-detail-head">
             <div>
               <span>Dettaglio prenotazione</span>
@@ -122,7 +98,9 @@
             </div>
             <div>
               <span>Stato</span>
-              <strong>{{ bookingStatusLabel(detail.booking.status) }}</strong>
+              <strong class="status-badge" [class.cancelled]="detail.booking.status === 'cancelled'">
+                {{ bookingStatusLabel(detail.booking.status) }}
+              </strong>
             </div>
             <div>
               <span>Pagamento</span>
@@ -134,17 +112,22 @@
             <div>
               <small>Totale {{ formatCurrency(paymentAmount(detail)) }}</small>
               <small *ngIf="walletPaymentAmount(detail) > 0">Wallet {{ formatCurrency(walletPaymentAmount(detail)) }}</small>
-              <small>{{ externalPaymentAmount(detail) > 0 ? 'Da pagare con carta/PayPal/Nexi ' + formatCurrency(externalPaymentAmount(detail)) : 'Nessuna quota esterna' }}</small>
+              <small>{{ externalPaymentLabel(detail) }}</small>
             </div>
+          </div>
+          <div class="refund-credit-box" *ngIf="cancellationRefundAmount(detail) > 0">
+            <span>Credito restituito</span>
+            <strong>{{ formatCurrency(cancellationRefundAmount(detail)) }}</strong>
+            <small>Accreditato nel wallet</small>
           </div>
           <div class="calendar-course-box">
             <ng-container *ngIf="courseForBooking(detail.booking._id) as course; else createCourseLink">
               <div>
                 <span>Corso collegato</span>
                 <strong>{{ course.title }}</strong>
-                <small>{{ course.enrollmentType === 'paid' ? formatCurrency(course.price) : 'Gratuito' }}</small>
+                <small>{{ canOpenCourseFromBooking(detail) ? (course.enrollmentType === 'paid' ? formatCurrency(course.price) : 'Gratuito') : courseAvailabilityMessage(detail) }}</small>
               </div>
-              <a mat-button class="action-filter" [routerLink]="['/courses']" [queryParams]="{ courseId: course._id }">
+              <a *ngIf="canOpenCourseFromBooking(detail)" mat-button class="action-filter" [routerLink]="['/courses']" [queryParams]="{ courseId: course._id }">
                 <i class="ri-book-open-line"></i>
                 <span>Apri corso</span>
               </a>
@@ -178,127 +161,174 @@
               <span>Richiedi annullamento</span>
             </button>
             <button
-              *ngIf="isPayable(detail)"
+              *ngIf="canPayCash(detail)"
               mat-button
               class="simulate-payment-button"
               type="button"
               [disabled]="payingBookingId === detail.booking._id"
-              (click)="markPaid(detail)">
-              <i class="ri-flask-line"></i>
-              <span>{{ payingBookingId === detail.booking._id && !checkoutProvider ? 'Simulazione...' : 'Simula pagamento' }}</span>
+              (click)="payCash(detail)">
+              <i class="ri-money-euro-circle-line"></i>
+              <span>{{ payingBookingId === detail.booking._id && !checkoutProvider ? 'Registrazione...' : 'Contanti' }}</span>
+            </button>
+            <button *ngIf="isPayable(detail) && isPaymentMethodAllowed(detail, 'stripe')" mat-button class="action-primary" type="button" [disabled]="payingBookingId === detail.booking._id" (click)="startCheckout(detail, 'stripe')">
+              <i class="ri-bank-card-line"></i>
+              <span>{{ checkoutProvider === 'stripe' ? 'Apertura...' : 'Stripe' }}</span>
+            </button>
+            <button *ngIf="isPayable(detail) && isPaymentMethodAllowed(detail, 'paypal')" mat-button class="action-primary" type="button" [disabled]="payingBookingId === detail.booking._id" (click)="startCheckout(detail, 'paypal')">
+              <i class="ri-paypal-line"></i>
+              <span>{{ checkoutProvider === 'paypal' ? 'Apertura...' : 'PayPal' }}</span>
+            </button>
+            <button *ngIf="isPayable(detail) && isPaymentMethodAllowed(detail, 'nexi')" mat-button class="action-primary" type="button" [disabled]="payingBookingId === detail.booking._id" (click)="startCheckout(detail, 'nexi')">
+              <i class="ri-secure-payment-line"></i>
+              <span>{{ checkoutProvider === 'nexi' ? 'Apertura...' : 'Nexi' }}</span>
             </button>
           </div>
         </div>
         <ng-template #calendarHint>
           <div class="calendar-empty">
             <i class="ri-calendar-check-line"></i>
-            <span>{{ selectedCalendarDate ? 'Nessuna prenotazione in questo giorno.' : 'I giorni evidenziati hanno prenotazioni.' }}</span>
+            <span>{{ selectedCalendarDate ? 'Nessuna prenotazione in questo giorno.' : (calendarBookings.length ? 'I giorni evidenziati hanno prenotazioni.' : 'Nessuna prenotazione') }}</span>
           </div>
         </ng-template>
       </mat-card-content>
     </mat-card>
   </div>
 
-  <div class="empty-bookings card card-pad" *ngIf="!isLoading && !bookings.length">
-    <i class="ri-calendar-check-line"></i>
-    <strong>Nessuna prenotazione</strong>
-    <span>Non ci sono prenotazioni con i filtri selezionati.</span>
-  </div>
+  <section class="booking-list-view" *ngIf="!isLoading && viewMode === 'list'">
+    <div class="card card-pad list-filter-card">
+      <form [formGroup]="listFilters" class="list-filters">
+        <mat-form-field appearance="outline" class="date-range-field">
+          <mat-label>Periodo</mat-label>
+          <mat-date-range-input [rangePicker]="listRangePicker">
+            <input matStartDate formControlName="start" placeholder="Da">
+            <input matEndDate formControlName="end" placeholder="A">
+          </mat-date-range-input>
+          <mat-datepicker-toggle matSuffix [for]="listRangePicker">
+            <i class="ri-calendar-line" matDatepickerToggleIcon></i>
+          </mat-datepicker-toggle>
+          <mat-date-range-picker #listRangePicker></mat-date-range-picker>
+        </mat-form-field>
 
-  <div class="booking-list" *ngIf="!isLoading && bookings.length">
-    <mat-card *ngFor="let item of bookings" class="booking-card">
-      <mat-card-content>
-        <div class="booking-main">
-          <div>
-            <h2>{{ item.booking.name }}</h2>
-            <p>{{ spaceName(item.booking) }} - {{ formatDate(item.booking.date) }} - {{ item.booking.startTime }} / {{ item.booking.endTime }}</p>
-          </div>
-          <div class="booking-status">
-            <span class="pill" [class]="item.booking.status">{{ bookingStatusLabel(item.booking.status) }}</span>
-            <span class="pill" [class]="paymentStatus(item)">{{ paymentStatusLabel(paymentStatus(item)) }}</span>
-          </div>
-        </div>
+        <mat-form-field appearance="outline">
+          <mat-label>Stato</mat-label>
+          <mat-select formControlName="status">
+            <mat-option value="">Tutti</mat-option>
+            <mat-option value="confirmed">Confermata</mat-option>
+            <mat-option value="cancelled">Annullata</mat-option>
+            <mat-option value="cancellation_requested">Richiesta annullamento in corso</mat-option>
+          </mat-select>
+        </mat-form-field>
 
-        <div class="booking-foot">
-          <span>{{ item.booking.rentalMode === 'full_day' ? 'Tutta la giornata' : 'A frazioni' }}</span>
-          <strong>{{ formatCurrency(paymentAmount(item)) }}</strong>
-          <small class="payment-split-inline" *ngIf="walletPaymentAmount(item) > 0">
-            Wallet {{ formatCurrency(walletPaymentAmount(item)) }} · Esterno {{ formatCurrency(externalPaymentAmount(item)) }}
-          </small>
-          <button
-            *ngIf="canRequestCancellation(item)"
-            mat-button
-            class="cancel-request-button"
-            [disabled]="cancellingBookingId === item.booking._id"
-            (click)="openCancellationDialog(item)">
-            <i class="ri-close-circle-line"></i>
-            <span>{{ cancellingBookingId === item.booking._id ? 'Invio richiesta...' : 'Richiedi annullamento' }}</span>
-          </button>
-          <div *ngIf="isPayable(item)" class="payment-actions">
+        <button mat-button class="action-filter" type="button" (click)="applyListFilters()">
+          <i class="ri-filter-3-line"></i>
+          <span>Filtra</span>
+        </button>
+        <button mat-button class="action-cancel" type="button" (click)="clearListFilters()">
+          <i class="ri-close-line"></i>
+          <span>Annulla</span>
+        </button>
+      </form>
+    </div>
+
+    <div class="card card-pad" *ngIf="isListLoading">Caricamento lista prenotazioni...</div>
+
+    <div class="empty-bookings card card-pad" *ngIf="!isListLoading && !listBookings.length">
+      <i class="ri-calendar-check-line"></i>
+      <strong>Nessuna prenotazione</strong>
+      <span>Non ci sono prenotazioni nel periodo selezionato.</span>
+    </div>
+
+    <div class="booking-list" *ngIf="!isListLoading && listBookings.length">
+      <mat-card *ngFor="let item of listBookings" class="booking-card" [class.cancelled]="item.booking.status === 'cancelled'">
+        <mat-card-content>
+          <div class="booking-main">
+            <div>
+              <h2>{{ item.booking.name }}</h2>
+              <p>{{ spaceName(item.booking) }} - {{ formatDate(item.booking.date) }} - {{ item.booking.startTime }} / {{ item.booking.endTime }}</p>
+            </div>
+            <div class="booking-status">
+              <span class="status-badge" [class.cancelled]="item.booking.status === 'cancelled'">{{ bookingStatusLabel(item.booking.status) }}</span>
+              <span class="pill" [class]="paymentStatus(item)">{{ paymentStatusLabel(paymentStatus(item)) }}</span>
+            </div>
+          </div>
+
+          <div class="payment-split-box compact" *ngIf="walletPaymentAmount(item) > 0 || externalPaymentAmount(item) > 0">
+            <span>Pagamento</span>
+            <div>
+              <small>Totale {{ formatCurrency(paymentAmount(item)) }}</small>
+              <small *ngIf="walletPaymentAmount(item) > 0">Wallet {{ formatCurrency(walletPaymentAmount(item)) }}</small>
+              <small>{{ externalPaymentLabel(item) }}</small>
+            </div>
+          </div>
+
+          <div class="booking-foot">
+            <button mat-button class="action-filter" type="button" (click)="selectListBooking(item)">
+              <i class="ri-calendar-line"></i>
+              <span>Vedi nel calendario</span>
+            </button>
             <button
+              *ngIf="canRequestCancellation(item)"
+              mat-button
+              class="cancel-request-button"
+              type="button"
+              [disabled]="cancellingBookingId === item.booking._id"
+              (click)="openCancellationDialog(item)">
+              <i class="ri-close-circle-line"></i>
+              <span>Richiedi annullamento</span>
+            </button>
+            <button
+              *ngIf="canPayCash(item)"
               mat-button
               class="simulate-payment-button"
+              type="button"
               [disabled]="payingBookingId === item.booking._id"
-              (click)="markPaid(item)">
-              <i class="ri-flask-line"></i>
-              <span>{{ payingBookingId === item.booking._id && !checkoutProvider ? 'Simulazione...' : 'Simula pagamento' }}</span>
+              (click)="payCash(item)">
+              <i class="ri-money-euro-circle-line"></i>
+              <span>{{ payingBookingId === item.booking._id && !checkoutProvider ? 'Registrazione...' : 'Contanti' }}</span>
             </button>
-            <button
-              mat-button
-              class="action-primary"
-              [disabled]="payingBookingId === item.booking._id"
-              (click)="startCheckout(item, 'stripe')">
+            <button *ngIf="isPayable(item) && isPaymentMethodAllowed(item, 'stripe')" mat-button class="action-primary" type="button" [disabled]="payingBookingId === item.booking._id" (click)="startCheckout(item, 'stripe')">
               <i class="ri-bank-card-line"></i>
-              <span>{{ payingBookingId === item.booking._id && checkoutProvider === 'stripe' ? 'Apertura...' : 'Stripe' }}</span>
+              <span>{{ checkoutProvider === 'stripe' ? 'Apertura...' : 'Stripe' }}</span>
             </button>
-            <button
-              mat-button
-              class="action-filter"
-              [disabled]="payingBookingId === item.booking._id"
-              (click)="startCheckout(item, 'paypal')">
+            <button *ngIf="isPayable(item) && isPaymentMethodAllowed(item, 'paypal')" mat-button class="action-primary" type="button" [disabled]="payingBookingId === item.booking._id" (click)="startCheckout(item, 'paypal')">
               <i class="ri-paypal-line"></i>
-              <span>{{ payingBookingId === item.booking._id && checkoutProvider === 'paypal' ? 'Apertura...' : 'PayPal' }}</span>
+              <span>{{ checkoutProvider === 'paypal' ? 'Apertura...' : 'PayPal' }}</span>
             </button>
-            <button
-              mat-button
-              class="action-filter"
-              [disabled]="payingBookingId === item.booking._id"
-              (click)="startCheckout(item, 'nexi')">
+            <button *ngIf="isPayable(item) && isPaymentMethodAllowed(item, 'nexi')" mat-button class="action-primary" type="button" [disabled]="payingBookingId === item.booking._id" (click)="startCheckout(item, 'nexi')">
               <i class="ri-secure-payment-line"></i>
-              <span>{{ payingBookingId === item.booking._id && checkoutProvider === 'nexi' ? 'Apertura...' : 'Nexi' }}</span>
+              <span>{{ checkoutProvider === 'nexi' ? 'Apertura...' : 'Nexi' }}</span>
             </button>
           </div>
-        </div>
-      </mat-card-content>
-    </mat-card>
-  </div>
+        </mat-card-content>
+      </mat-card>
+    </div>
 
-  <div class="card card-pad booking-pagination" *ngIf="!isLoading && total > 0">
-    <div>
-      <strong>{{ pageStart() }}-{{ pageEnd() }}</strong>
-      <span>di {{ total }} prenotazioni</span>
+    <div class="card card-pad booking-pagination" *ngIf="!isListLoading && listTotal > 0">
+      <div>
+        <strong>{{ listPageStart() }}-{{ listPageEnd() }}</strong>
+        <span>di {{ listTotal }} prenotazioni</span>
+      </div>
+      <mat-form-field appearance="outline">
+        <mat-label>Per pagina</mat-label>
+        <mat-select [value]="listLimit" (selectionChange)="changeListLimit($event.value)">
+          <mat-option [value]="10">10</mat-option>
+          <mat-option [value]="20">20</mat-option>
+          <mat-option [value]="50">50</mat-option>
+        </mat-select>
+      </mat-form-field>
+      <div class="pagination-actions">
+        <button mat-button class="action-filter" type="button" [disabled]="listPage <= 1" (click)="previousListPage()">
+          <i class="ri-arrow-left-s-line"></i>
+          <span>Precedente</span>
+        </button>
+        <span>Pagina {{ listPage }} di {{ listTotalPages() }}</span>
+        <button mat-button class="action-filter" type="button" [disabled]="listPage >= listTotalPages()" (click)="nextListPage()">
+          <span>Successiva</span>
+          <i class="ri-arrow-right-s-line"></i>
+        </button>
+      </div>
     </div>
-    <mat-form-field appearance="outline">
-      <mat-label>Per pagina</mat-label>
-      <mat-select [value]="limit" (selectionChange)="changeLimit($event.value)">
-        <mat-option [value]="5">5</mat-option>
-        <mat-option [value]="10">10</mat-option>
-        <mat-option [value]="20">20</mat-option>
-        <mat-option [value]="50">50</mat-option>
-      </mat-select>
-    </mat-form-field>
-    <div class="pagination-actions">
-      <button mat-button class="action-filter" type="button" [disabled]="page <= 1" (click)="previousPage()">
-        <i class="ri-arrow-left-s-line"></i>
-        <span>Precedente</span>
-      </button>
-      <span>Pagina {{ page }} di {{ totalPages() }}</span>
-      <button mat-button class="action-filter" type="button" [disabled]="page >= totalPages()" (click)="nextPage()">
-        <span>Successiva</span>
-        <i class="ri-arrow-right-s-line"></i>
-      </button>
-    </div>
-  </div>
+  </section>
 
   <div class="cancel-modal-backdrop" *ngIf="cancellationTarget" (click)="closeCancellationDialog()">
     <div class="cancel-modal" (click)="$event.stopPropagation()">

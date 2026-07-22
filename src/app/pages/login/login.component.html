@@ -1,16 +1,16 @@
 <div class="sign-in-area">
-  <div class="d-table">
-    <div class="d-table-cell">
+  <div class="login-shell">
+    <div class="login-shell-inner">
       <div class="trinta-form ml-auto mr-auto bg-white border-radius">
         <div class="login-head">
-          <span>{{ isRecovery ? 'Recupero accesso' : 'Accesso gestore' }}</span>
-          <h3>{{ isRecovery ? 'Imposta una nuova password' : "N'Agorà Gestore" }}</h3>
-          <p>{{ isRecovery ? 'Inserisci email gestore e nuova password.' : 'Usa le credenziali del tuo profilo gestore.' }}</p>
+          <span>{{ isRegistration ? 'Registrazione gestore' : (isRecovery ? 'Recupero accesso' : 'Accesso gestore') }}</span>
+          <h3>{{ isRegistration ? 'Crea il tuo profilo' : (isRecovery ? (resetToken ? 'Imposta una nuova password' : 'Recupera password') : "N'Agorà Gestore") }}</h3>
+          <p>{{ isRegistration ? 'Verifichiamo email e cellulare con OTP.' : (isRecovery ? (resetToken ? 'Inserisci la nuova password scelta.' : 'Inserisci la tua email, ti invieremo il link di recupero.') : 'Usa le credenziali del tuo profilo gestore.') }}</p>
         </div>
 
-        <form *ngIf="!isRecovery" [formGroup]="form" (ngSubmit)="submit()" class="login-form">
+        <form *ngIf="!isRecovery && !isRegistration" [formGroup]="form" (ngSubmit)="submit()" class="login-form">
           <div class="form-group">
-            <label class="label d-block fw-medium mb-10">Email</label>
+            <label class="label d-block fw-medium mt-10">Email</label>
             <mat-form-field>
               <i class="ri-mail-line field-icon"></i>
               <mat-label>Inserisci email</mat-label>
@@ -19,11 +19,14 @@
           </div>
 
           <div class="form-group">
-            <label class="label d-block fw-medium mb-10">Password</label>
+            <label class="label d-block fw-medium mt-10">Password</label>
             <mat-form-field>
               <i class="ri-lock-line field-icon"></i>
               <mat-label>Inserisci password</mat-label>
-              <input matInput formControlName="password" type="password">
+              <input matInput formControlName="password" [type]="hideLoginPassword ? 'password' : 'text'">
+              <button mat-button matSuffix class="password-toggle" type="button" (click)="hideLoginPassword = !hideLoginPassword" [attr.aria-label]="hideLoginPassword ? 'Mostra password' : 'Nascondi password'">
+                <i [class]="hideLoginPassword ? 'ri-eye-line' : 'ri-eye-off-line'"></i>
+              </button>
             </mat-form-field>
           </div>
 
@@ -33,44 +36,193 @@
           <button mat-button class="action-primary" type="submit" [disabled]="form.invalid || isLoading">
             {{ isLoading ? 'Accesso...' : 'Accedi' }}
           </button>
-          <button mat-button class="link-button" type="button" (click)="toggleRecovery()">Recupera password</button>
+          <div class="login-links">
+            <p>Non sei ancora registrato? <button type="button" class="text-link" (click)="toggleRegistration()">Clicca qui per registrarti.</button></p>
+            <p>Hai smarrito la password? <button type="button" class="text-link" (click)="toggleRecovery()">Clicca qui per recuperarla.</button></p>
+          </div>
         </form>
 
-        <form *ngIf="isRecovery" [formGroup]="recoveryForm" (ngSubmit)="resetPassword()" class="login-form">
+        <form *ngIf="isRecovery && !resetToken" [formGroup]="recoveryForm" (ngSubmit)="resetPassword()" class="login-form">
           <div class="form-group">
-            <label class="label d-block fw-medium mb-10">Email gestore</label>
+            <label class="label d-block fw-medium mt-10">Email</label>
             <mat-form-field>
               <i class="ri-mail-line field-icon"></i>
-              <mat-label>Email gestore</mat-label>
+              <mat-label>Email</mat-label>
               <input matInput formControlName="email" type="email">
             </mat-form-field>
           </div>
 
+          <div *ngIf="errorMessage" class="login-error">{{ errorMessage }}</div>
+          <div *ngIf="successMessage" class="login-success">{{ successMessage }}</div>
+          <div class="otp-box" *ngIf="devResetUrl">
+            <strong>Link sviluppo</strong>
+            <span>{{ devResetUrl }}</span>
+          </div>
+
+          <button mat-button class="action-primary" type="submit" [disabled]="recoveryForm.invalid || isLoading">
+            {{ isLoading ? 'Invio link...' : 'Invia link di recupero' }}
+          </button>
+          <div class="login-links">
+            <p>Sei già registrato? <button type="button" class="text-link" (click)="toggleRecovery()">Torna al login.</button></p>
+          </div>
+        </form>
+
+        <form *ngIf="isRecovery && resetToken" [formGroup]="resetTokenForm" (ngSubmit)="confirmResetPassword()" class="login-form">
           <div class="form-group">
-            <label class="label d-block fw-medium mb-10">Nuova password</label>
+            <label class="label d-block fw-medium mt-10">Nuova password</label>
             <mat-form-field>
               <i class="ri-lock-line field-icon"></i>
               <mat-label>Nuova password</mat-label>
-              <input matInput formControlName="password" type="password">
+              <input matInput formControlName="password" [type]="hideResetPassword ? 'password' : 'text'">
+              <button mat-button matSuffix class="password-toggle" type="button" (click)="hideResetPassword = !hideResetPassword" [attr.aria-label]="hideResetPassword ? 'Mostra password' : 'Nascondi password'">
+                <i [class]="hideResetPassword ? 'ri-eye-line' : 'ri-eye-off-line'"></i>
+              </button>
             </mat-form-field>
           </div>
 
           <div class="form-group">
-            <label class="label d-block fw-medium mb-10">Conferma password</label>
+            <label class="label d-block fw-medium mt-10">Conferma password</label>
             <mat-form-field>
               <i class="ri-lock-password-line field-icon"></i>
               <mat-label>Conferma password</mat-label>
-              <input matInput formControlName="confirmPassword" type="password">
+              <input matInput formControlName="confirmPassword" [type]="hideResetConfirmPassword ? 'password' : 'text'">
+              <button mat-button matSuffix class="password-toggle" type="button" (click)="hideResetConfirmPassword = !hideResetConfirmPassword" [attr.aria-label]="hideResetConfirmPassword ? 'Mostra password' : 'Nascondi password'">
+                <i [class]="hideResetConfirmPassword ? 'ri-eye-line' : 'ri-eye-off-line'"></i>
+              </button>
             </mat-form-field>
           </div>
 
           <div *ngIf="errorMessage" class="login-error">{{ errorMessage }}</div>
           <div *ngIf="successMessage" class="login-success">{{ successMessage }}</div>
 
-          <button mat-button class="action-primary" type="submit" [disabled]="recoveryForm.invalid || isLoading">
+          <button mat-button class="action-primary" type="submit" [disabled]="resetTokenForm.invalid || isLoading">
             {{ isLoading ? 'Aggiornamento...' : 'Aggiorna password' }}
           </button>
-          <button mat-button class="link-button" type="button" (click)="toggleRecovery()">Torna al login</button>
+          <div class="login-links">
+            <p>Sei già registrato? <button type="button" class="text-link" (click)="toggleRecovery()">Torna al login.</button></p>
+          </div>
+        </form>
+
+        <form *ngIf="isRegistration && !registrationOtpRequested" [formGroup]="registrationForm" (ngSubmit)="requestRegistrationOtp()" class="login-form">
+          <div class="form-group">
+            <label class="label d-block fw-medium mt-10">Nome e cognome</label>
+            <mat-form-field>
+              <i class="ri-user-line field-icon"></i>
+              <mat-label>Nome e cognome</mat-label>
+              <input matInput formControlName="name" autocomplete="off">
+            </mat-form-field>
+          </div>
+
+          <div class="form-group">
+            <label class="label d-block fw-medium mt-10">Email</label>
+            <mat-form-field>
+              <i class="ri-mail-line field-icon"></i>
+              <mat-label>Email</mat-label>
+              <input matInput formControlName="email" type="email" autocomplete="off">
+            </mat-form-field>
+          </div>
+
+          <div class="form-grid">
+            <div class="form-group">
+              <label class="label d-block fw-medium mt-10">Cellulare</label>
+              <mat-form-field>
+                <i class="ri-phone-line field-icon"></i>
+                <mat-label>Cellulare</mat-label>
+                <input matInput formControlName="phone" autocomplete="off" placeholder="3331234567">
+              </mat-form-field>
+              <small class="field-error" *ngIf="registrationForm.get('phone')?.hasError('italianMobilePhone') && registrationForm.get('phone')?.touched">
+                Inserisci 9 o 10 cifre senza prefisso, iniziando con 3.
+              </small>
+            </div>
+
+            <div class="form-group">
+              <label class="label d-block fw-medium mt-10">Codice fiscale</label>
+              <mat-form-field>
+                <i class="ri-id-card-line field-icon"></i>
+                <mat-label>Codice fiscale</mat-label>
+                <input matInput formControlName="taxCode" autocomplete="off">
+              </mat-form-field>
+              <small class="field-error" *ngIf="registrationForm.get('taxCode')?.hasError('taxCode') && registrationForm.get('taxCode')?.touched">
+                Codice fiscale non valido.
+              </small>
+            </div>
+          </div>
+
+          <div class="form-grid">
+            <div class="form-group">
+              <label class="label d-block fw-medium mt-10">Password</label>
+              <mat-form-field>
+                <i class="ri-lock-line field-icon"></i>
+                <mat-label>Password</mat-label>
+                <input matInput formControlName="password" [type]="hideRegistrationPassword ? 'password' : 'text'">
+                <button mat-button matSuffix class="password-toggle" type="button" (click)="hideRegistrationPassword = !hideRegistrationPassword" [attr.aria-label]="hideRegistrationPassword ? 'Mostra password' : 'Nascondi password'">
+                  <i [class]="hideRegistrationPassword ? 'ri-eye-line' : 'ri-eye-off-line'"></i>
+                </button>
+              </mat-form-field>
+            </div>
+
+            <div class="form-group">
+              <label class="label d-block fw-medium mt-10">Conferma password</label>
+              <mat-form-field>
+                <i class="ri-lock-password-line field-icon"></i>
+                <mat-label>Conferma password</mat-label>
+                <input matInput formControlName="confirmPassword" [type]="hideRegistrationConfirmPassword ? 'password' : 'text'">
+                <button mat-button matSuffix class="password-toggle" type="button" (click)="hideRegistrationConfirmPassword = !hideRegistrationConfirmPassword" [attr.aria-label]="hideRegistrationConfirmPassword ? 'Mostra password' : 'Nascondi password'">
+                  <i [class]="hideRegistrationConfirmPassword ? 'ri-eye-line' : 'ri-eye-off-line'"></i>
+                </button>
+              </mat-form-field>
+            </div>
+          </div>
+
+          <div *ngIf="errorMessage" class="login-error">{{ errorMessage }}</div>
+          <div *ngIf="successMessage" class="login-success">{{ successMessage }}</div>
+
+          <button mat-button class="action-primary" type="submit" [disabled]="registrationForm.invalid || isLoading">
+            {{ isLoading ? 'Registrazione...' : 'Registrati' }}
+          </button>
+          <div class="login-links">
+            <p>Sei già registrato? <button type="button" class="text-link" (click)="toggleRegistration()">Torna al login.</button></p>
+          </div>
+        </form>
+
+        <form *ngIf="isRegistration && registrationOtpRequested" [formGroup]="otpForm" (ngSubmit)="confirmRegistrationOtp()" class="login-form">
+          <div class="otp-box">
+            <strong>Controlla email e cellulare</strong>
+            <span>Inserisci i codici OTP inviati a {{ registrationEmail }} e {{ registrationPhone }}.</span>
+            <small *ngIf="devEmailOtp">OTP email sviluppo: {{ devEmailOtp }}</small>
+            <small *ngIf="devPhoneOtp">OTP cellulare sviluppo: {{ devPhoneOtp }}</small>
+          </div>
+
+          <div class="form-grid">
+            <div class="form-group">
+              <label class="label d-block fw-medium mt-10">OTP email</label>
+              <mat-form-field>
+                <i class="ri-mail-check-line field-icon"></i>
+                <mat-label>6 cifre</mat-label>
+                <input matInput formControlName="emailOtp" maxlength="6" autocomplete="one-time-code">
+              </mat-form-field>
+            </div>
+
+            <div class="form-group">
+              <label class="label d-block fw-medium mt-10">OTP cellulare</label>
+              <mat-form-field>
+                <i class="ri-smartphone-line field-icon"></i>
+                <mat-label>6 cifre</mat-label>
+                <input matInput formControlName="phoneOtp" maxlength="6" autocomplete="one-time-code">
+              </mat-form-field>
+            </div>
+          </div>
+
+          <div *ngIf="errorMessage" class="login-error">{{ errorMessage }}</div>
+          <div *ngIf="successMessage" class="login-success">{{ successMessage }}</div>
+
+          <button mat-button class="action-primary" type="submit" [disabled]="otpForm.invalid || isLoading">
+            {{ isLoading ? 'Verifica...' : 'Completa registrazione' }}
+          </button>
+          <div class="login-links">
+            <p>Non hai inserito i dati corretti? <button type="button" class="text-link" (click)="registrationOtpRequested = false">Clicca qui per modificare i dati.</button></p>
+            <p>Sei già registrato? <button type="button" class="text-link" (click)="toggleRegistration()">Torna al login.</button></p>
+          </div>
         </form>
       </div>
     </div>

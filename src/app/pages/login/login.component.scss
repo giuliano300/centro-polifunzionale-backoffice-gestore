@@ -1,12 +1,20 @@
 .sign-in-area {
-  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   overflow-x: hidden;
   padding: 30px 12.5px;
   background: var(--app-bg);
 
+  .login-shell,
+  .login-shell-inner {
+    width: 100%;
+  }
+
   .trinta-form {
     width: 100%;
-    max-width: 520px;
+    max-width: 550px;
     padding: 35px 30px;
     border: 1px solid var(--ui-border);
     border-radius: var(--radius);
@@ -18,7 +26,7 @@
 .login-head {
   display: grid;
   gap: 7px;
-  margin-bottom: 24px;
+  margin-bottom: 14px;
   text-align: center;
 
   span {
@@ -46,21 +54,61 @@
 
 .login-form {
   display: grid;
-  gap: 16px;
+  gap: 10px;
 }
 
 .form-group {
   display: grid;
-  gap: 10px;
+  gap: 3px;
 
   .label {
+    margin-bottom: 0 !important;
     color: var(--blackColor);
     font-size: 14px;
+    line-height: 1.25;
   }
 
   .mat-mdc-form-field {
     display: block;
     width: 100%;
+    margin: 0;
+  }
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 14px;
+}
+
+.field-error {
+  margin-top: -4px;
+  color: var(--action-delete-text-strong);
+  font-size: 12px;
+}
+
+.otp-box {
+  display: grid;
+  gap: 5px;
+  padding: 14px 16px;
+  border: 1px solid var(--action-filter-border);
+  border-radius: var(--radius);
+  background: var(--action-filter-bg-soft);
+  color: var(--action-filter-text-strong);
+
+  strong {
+    font-size: 15px;
+    font-weight: 500;
+  }
+
+  span,
+  small {
+    font-size: 13px;
+    line-height: 1.4;
+  }
+
+  small {
+    color: var(--action-warning-text-strong);
   }
 }
 
@@ -87,16 +135,50 @@
   background: transparent !important;
 }
 
+.login-links {
+  display: grid;
+  gap: 4px;
+  margin-top: 2px;
+  text-align: left;
+
+  p {
+    margin: 0;
+    color: var(--ui-text-muted);
+    font-size: 13px;
+    line-height: 1.45;
+  }
+}
+
+.text-link {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--action-filter-text);
+  font: inherit;
+  cursor: pointer;
+
+  &:hover {
+    color: var(--action-filter-text-strong);
+    text-decoration: underline;
+  }
+}
+
 ::ng-deep .sign-in-area .trinta-form form {
   .mat-mdc-button {
     width: 100%;
     height: auto;
     min-width: auto;
-    margin-top: 8px;
+    margin-top: 4px;
     padding: 16px 25px;
     font-family: var(--headingFontFamily);
     font-size: 15px;
     font-weight: 500;
+    white-space: nowrap;
+  }
+
+  .mat-mdc-form-field-subscript-wrapper {
+    display: none;
   }
 
   .mat-mdc-form-field-focus-overlay,
@@ -109,20 +191,46 @@
   }
 
   .mat-mdc-text-field-wrapper {
-    padding: 0 15px 0 58px;
-    border: 1px solid var(--app-bg);
+    padding: 0 8px 0 58px;
+    border: 1px solid var(--ui-border-input-form);
     border-radius: var(--radius);
     background-color: var(--app-bg) !important;
   }
 
+  .mat-mdc-form-field-infix {
+    min-height: 46px;
+    padding-top: 11px;
+    padding-bottom: 8px;
+  }
+
   .field-icon {
     position: absolute;
-    top: 15px;
+    top: 13px;
     left: -42px;
     z-index: 1;
     color: var(--blackColor);
     font-size: 22px;
     line-height: 1;
+  }
+
+  .password-toggle.mat-mdc-button {
+    width: 38px !important;
+    min-width: 38px !important;
+    height: 38px;
+    margin: 0;
+    padding: 0 !important;
+    background: transparent !important;
+    color: var(--ui-text-muted) !important;
+
+    i {
+      font-size: 19px;
+      line-height: 1;
+    }
+
+    &:hover {
+      color: var(--ui-text) !important;
+      background: transparent !important;
+    }
   }
 }
 
@@ -134,5 +242,9 @@
       max-width: 100%;
       padding: 30px 20px;
     }
+  }
+
+  .form-grid {
+    grid-template-columns: 1fr;
   }
 }

@@ -64,3 +64,62 @@
   display: flex;
   justify-content: flex-end;
 }
+
+.phone-otp-box,
+.otp-dev-box {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 1px solid var(--action-filter-border);
+  border-radius: var(--radius);
+  background: var(--action-filter-bg-soft);
+  color: var(--action-filter-text-strong);
+
+  strong,
+  span {
+    display: block;
+  }
+
+  strong {
+    font-size: 14px;
+    font-weight: 500;
+  }
+
+  span {
+    margin-top: 3px;
+    color: var(--ui-text-muted);
+    font-size: 12px;
+    line-height: 1.35;
+  }
+}
+
+.otp-dev-box {
+  align-items: flex-start;
+  flex-direction: column;
+  gap: 4px;
+  border-color: var(--action-warning-border);
+  background: var(--action-warning-bg);
+  color: var(--action-warning-text-strong);
+}
+
+.password-toggle.mat-mdc-button {
+  width: 38px !important;
+  min-width: 38px !important;
+  height: 38px;
+  margin: 0;
+  padding: 0 !important;
+  background: transparent !important;
+  color: var(--ui-text-muted) !important;
+
+  i {
+    font-size: 19px;
+    line-height: 1;
+  }
+
+  &:hover {
+    color: var(--ui-text) !important;
+    background: transparent !important;
+  }
+}

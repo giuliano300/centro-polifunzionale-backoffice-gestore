@@ -36,6 +36,27 @@
         <input matInput formControlName="phone">
       </mat-form-field>
 
+      <div class="phone-otp-box" *ngIf="phoneChanged()">
+        <div>
+          <strong>Verifica nuovo cellulare</strong>
+          <span>Invia l'OTP al nuovo numero e inserisci il codice ricevuto prima di salvare.</span>
+        </div>
+        <button mat-button type="button" class="action-filter" [disabled]="isSendingOtp || form.controls.phone.invalid" (click)="requestPhoneOtp()">
+          <i class="ri-smartphone-line"></i>
+          <span>{{ isSendingOtp ? 'Invio OTP...' : 'Invia OTP' }}</span>
+        </button>
+      </div>
+
+      <div class="otp-dev-box" *ngIf="devPhoneOtp">
+        <strong>OTP cellulare sviluppo</strong>
+        <span>{{ devPhoneOtp }}</span>
+      </div>
+
+      <mat-form-field appearance="outline" *ngIf="phoneChanged()">
+        <mat-label>OTP cellulare</mat-label>
+        <input matInput formControlName="phoneOtp" maxlength="6" autocomplete="one-time-code">
+      </mat-form-field>
+
       <mat-form-field appearance="outline">
         <mat-label>Codice fiscale</mat-label>
         <input matInput formControlName="taxCode">
@@ -43,7 +64,10 @@
 
       <mat-form-field appearance="outline" class="full">
         <mat-label>Nuova password</mat-label>
-        <input matInput type="password" formControlName="password">
+        <input matInput [type]="hidePassword ? 'password' : 'text'" formControlName="password">
+        <button mat-button matSuffix class="password-toggle" type="button" (click)="hidePassword = !hidePassword" [attr.aria-label]="hidePassword ? 'Mostra password' : 'Nascondi password'">
+          <i [class]="hidePassword ? 'ri-eye-line' : 'ri-eye-off-line'"></i>
+        </button>
       </mat-form-field>
 
       <div class="actions full">

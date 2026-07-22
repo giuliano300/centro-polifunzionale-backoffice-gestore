@@ -25,10 +25,15 @@ export class AppComponent {
       this.notifications.connect();
       this.loadManager();
     }
+
+    this.auth.loginCompleted$.subscribe(() => {
+      this.loadManager();
+    });
   }
 
   get managerName(): string {
-    return this.manager?.name || this.auth.payload()?.email || 'Gestore';
+    const payload = this.auth.payload();
+    return this.manager?.name || payload?.name || payload?.email || 'Gestore';
   }
 
   private loadManager(): void {
@@ -36,8 +41,11 @@ export class AppComponent {
       next: (user) => {
         this.manager = user;
       },
-      error: () => {
+      error: (error) => {
         this.manager = null;
+        if (error?.status === 401) {
+          this.logout();
+        }
       },
     });
   }

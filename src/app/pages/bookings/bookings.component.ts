@@ -20,32 +20,35 @@ import { ApiService } from '../../core/api.service';
 })
 export class BookingsComponent {
   private fb = inject(FormBuilder);
-  bookings: BookingWithPayments[] = [];
   calendarBookings: BookingWithPayments[] = [];
+  listBookings: BookingWithPayments[] = [];
   courses: Course[] = [];
-  selectedCalendarDate: Date | null = null;
+  selectedCalendarDate: Date | null = this.today();
   selectedCalendarBooking: BookingWithPayments | null = null;
+  viewMode: 'calendar' | 'list' = 'calendar';
   isLoading = true;
+  isListLoading = false;
+  listPage = 1;
+  listLimit = 10;
+  listTotal = 0;
   payingBookingId = '';
   checkoutProvider = '';
   cancellingBookingId = '';
   cancellationTarget: BookingWithPayments | null = null;
   message = '';
-  page = 1;
-  limit = 10;
-  total = 0;
-  filters = this.fb.group({
-    start: [null as Date | null],
-    end: [null as Date | null],
-    status: [''],
-    search: [''],
-  });
 
   @ViewChild(MatCalendar) calendar!: MatCalendar<Date>;
+
+  listFilters = this.fb.group({
+    start: [null as Date | null],
+    end: [null as Date | null],
+    status: ['' as Booking['status'] | ''],
+  });
 
   constructor(private api: ApiService) {
     this.loadCourses();
     this.load();
+    this.loadList();
   }
 
   dateClass: MatCalendarCellClassFunction<Date> = (cellDate) => {
@@ -55,41 +58,17 @@ export class BookingsComponent {
   load(): void {
     this.isLoading = true;
     this.message = '';
-    const filters = this.filters.getRawValue();
-    this.api.bookingsPage({
-      start: this.formatApiDate(filters.start),
-      end: this.formatApiDate(filters.end),
-      status: filters.status || '',
-      search: filters.search || '',
-      page: String(this.page),
-      limit: String(this.limit),
-    }).subscribe({
-      next: (result) => {
-        this.bookings = result.items;
-        this.total = result.total;
-        this.page = result.page;
-        this.limit = result.limit;
-        this.isLoading = false;
-        this.loadCalendarBookings();
-      },
-      error: () => {
-        this.message = 'Prenotazioni non disponibili.';
-        this.isLoading = false;
-      },
-    });
-  }
-
-  loadCalendarBookings(): void {
-    const filters = this.filters.getRawValue();
-    this.api.bookings({
-      status: filters.status || '',
-      search: filters.search || '',
-    }).subscribe({
+    this.api.bookings().subscribe({
       next: (items) => {
         this.calendarBookings = items;
         this.dateClass = (cellDate) => this.hasBookingsOnDate(cellDate) ? 'has-bookings' : '';
         this.syncSelectedCalendarBooking();
+        this.isLoading = false;
         setTimeout(() => this.calendar?.updateTodaysDate());
+      },
+      error: () => {
+        this.message = 'Prenotazioni non disponibili.';
+        this.isLoading = false;
       },
     });
   }
@@ -102,17 +81,97 @@ export class BookingsComponent {
     });
   }
 
-  clear(): void {
-    this.filters.reset({ start: null, end: null, status: '', search: '' });
-    this.selectedCalendarDate = null;
-    this.selectedCalendarBooking = null;
-    this.page = 1;
-    this.load();
+  setViewMode(mode: 'calendar' | 'list'): void {
+    this.viewMode = mode;
+    if (mode === 'list' && !this.listBookings.length) {
+      this.loadList();
+    }
   }
 
-  applyFilters(): void {
-    this.page = 1;
-    this.load();
+  loadList(): void {
+    this.isListLoading = true;
+    const filters = this.listFilters.getRawValue();
+    this.api.bookingsPage({
+      start: this.formatApiDate(filters.start),
+      end: this.formatApiDate(filters.end),
+      status: filters.status || '',
+      page: String(this.listPage),
+      limit: String(this.listLimit),
+    }).subscribe({
+      next: (result) => {
+        this.listBookings = result.items;
+        this.listTotal = result.total;
+        this.listPage = result.page;
+        this.listLimit = result.limit;
+        this.isListLoading = false;
+      },
+      error: () => {
+        this.message = 'Lista prenotazioni non disponibile.';
+        this.isListLoading = false;
+      },
+    });
+  }
+
+  applyListFilters(): void {
+    this.listPage = 1;
+    this.loadList();
+  }
+
+  clearListFilters(): void {
+    this.listFilters.reset({ start: null, end: null, status: '' });
+    this.listPage = 1;
+    this.loadList();
+  }
+
+  listTotalPages(): number {
+    return Math.max(Math.ceil(this.listTotal / this.listLimit), 1);
+  }
+
+  listPageStart(): number {
+    if (!this.listTotal) {
+      return 0;
+    }
+    return (this.listPage - 1) * this.listLimit + 1;
+  }
+
+  listPageEnd(): number {
+    return Math.min(this.listPage * this.listLimit, this.listTotal);
+  }
+
+  changeListLimit(limit: number): void {
+    this.listLimit = limit;
+    this.listPage = 1;
+    this.loadList();
+  }
+
+  previousListPage(): void {
+    if (this.listPage <= 1) {
+      return;
+    }
+    this.listPage -= 1;
+    this.loadList();
+  }
+
+  nextListPage(): void {
+    if (this.listPage >= this.listTotalPages()) {
+      return;
+    }
+    this.listPage += 1;
+    this.loadList();
+  }
+
+  selectListBooking(item: BookingWithPayments): void {
+    const selected = new Date(item.booking.date);
+    selected.setHours(0, 0, 0, 0);
+    this.selectedCalendarDate = selected;
+    this.selectedCalendarBooking = item;
+    this.viewMode = 'calendar';
+    setTimeout(() => this.calendar?.updateTodaysDate());
+  }
+
+  clear(): void {
+    this.selectedCalendarDate = null;
+    this.selectedCalendarBooking = null;
   }
 
   selectCalendarDate(date: Date | null): void {
@@ -123,10 +182,7 @@ export class BookingsComponent {
     const selected = new Date(date);
     selected.setHours(0, 0, 0, 0);
     this.selectedCalendarDate = selected;
-    this.selectedCalendarBooking = null;
-    this.filters.patchValue({ start: selected, end: selected });
-    this.page = 1;
-    this.load();
+    this.syncSelectedCalendarBooking();
   }
 
   selectCalendarBooking(item: BookingWithPayments): void {
@@ -167,6 +223,10 @@ export class BookingsComponent {
     return this.courseForBooking(item.booking._id) ? 'Apri corso' : 'Crea corso';
   }
 
+  canOpenCourseFromBooking(item: BookingWithPayments): boolean {
+    return item.booking.status !== 'cancelled' && item.booking.status !== 'cancellation_requested';
+  }
+
   canCreateCourseFromBooking(item: BookingWithPayments): boolean {
     return this.isPaid(item)
       && item.booking.status !== 'cancelled'
@@ -192,43 +252,6 @@ export class BookingsComponent {
     }
 
     return '';
-  }
-
-  totalPages(): number {
-    return Math.max(Math.ceil(this.total / this.limit), 1);
-  }
-
-  pageStart(): number {
-    if (!this.total) {
-      return 0;
-    }
-    return (this.page - 1) * this.limit + 1;
-  }
-
-  pageEnd(): number {
-    return Math.min(this.page * this.limit, this.total);
-  }
-
-  changeLimit(limit: number): void {
-    this.limit = limit;
-    this.page = 1;
-    this.load();
-  }
-
-  previousPage(): void {
-    if (this.page <= 1) {
-      return;
-    }
-    this.page -= 1;
-    this.load();
-  }
-
-  nextPage(): void {
-    if (this.page >= this.totalPages()) {
-      return;
-    }
-    this.page += 1;
-    this.load();
   }
 
   paymentStatus(item: BookingWithPayments): string {
@@ -272,6 +295,10 @@ export class BookingsComponent {
       && this.externalPaymentAmount(item) > 0;
   }
 
+  canPayCash(item: BookingWithPayments): boolean {
+    return this.isPayable(item) && this.isPaymentMethodAllowed(item, 'cash');
+  }
+
   canRequestCancellation(item: BookingWithPayments): boolean {
     return item.booking.status !== 'cancelled'
       && item.booking.status !== 'cancellation_requested'
@@ -292,21 +319,36 @@ export class BookingsComponent {
     return payment?.externalAmount || payment?.amount || 0;
   }
 
-  markPaid(item: BookingWithPayments): void {
-    if (!this.isPayable(item) || this.payingBookingId === item.booking._id) {
+  externalPaymentLabel(item: BookingWithPayments): string {
+    const payment = this.pendingPayment(item) || this.primaryPayment(item);
+    const amount = this.externalPaymentAmount(item);
+    if (amount <= 0) {
+      return 'Nessun pagamento aggiuntivo';
+    }
+
+    return `${this.paymentMethodLabel(payment)} ${this.formatCurrency(amount)}`;
+  }
+
+  cancellationRefundAmount(item: BookingWithPayments): number {
+    return Number(item.cancellationRefundAmount || 0);
+  }
+
+  payCash(item: BookingWithPayments): void {
+    if (!this.canPayCash(item) || this.payingBookingId === item.booking._id) {
       return;
     }
 
     this.payingBookingId = item.booking._id;
-    this.api.markBookingPaid(item.booking._id, this.externalPaymentAmount(item)).subscribe({
+    this.api.markBookingPaid(item.booking._id, this.externalPaymentAmount(item), 'cash').subscribe({
       next: () => {
-        this.message = 'Pagamento simulato correttamente.';
+        this.message = 'Pagamento in contanti registrato correttamente.';
         this.payingBookingId = '';
         this.loadCourses();
         this.load();
+        this.loadList();
       },
       error: (error) => {
-        this.message = error?.error?.message || 'Pagamento non registrato.';
+        this.message = error?.error?.message || 'Pagamento in contanti non registrato.';
         this.payingBookingId = '';
       },
     });
@@ -361,6 +403,7 @@ export class BookingsComponent {
         this.cancellingBookingId = '';
         this.cancellationTarget = null;
         this.load();
+        this.loadList();
       },
       error: (error) => {
         this.message = error?.error?.message || 'Richiesta di annullamento non inviata.';
@@ -402,6 +445,12 @@ export class BookingsComponent {
     bookingDate.setHours(0, 0, 0, 0);
     today.setHours(0, 0, 0, 0);
     return bookingDate.getTime() > today.getTime();
+  }
+
+  private today(): Date {
+    const date = new Date();
+    date.setHours(0, 0, 0, 0);
+    return date;
   }
 
   private isPaid(item: BookingWithPayments): boolean {
@@ -476,5 +525,30 @@ export class BookingsComponent {
     return item.payments.find((payment) => this.normalizedPaymentStatus(payment) === 'PAID')
       || item.payments.find((payment) => this.normalizedPaymentStatus(payment) === 'PENDING')
       || item.payments[0];
+  }
+
+  private paymentMethodLabel(payment?: Payment): string {
+    const method = String(payment?.provider || payment?.method || '').toLowerCase();
+    const labels: Record<string, string> = {
+      wallet: 'Wallet',
+      manual: 'Pagamento manuale',
+      stripe: 'Stripe',
+      paypal: 'PayPal',
+      nexi: 'Nexi',
+      card: 'Carta',
+      cash: 'Contanti',
+    };
+
+    if (method && labels[method]) {
+      return labels[method];
+    }
+
+    return payment?.status === 'PAID' ? 'Pagamento registrato' : 'Pagamento da completare';
+  }
+
+  isPaymentMethodAllowed(item: BookingWithPayments, method: 'cash' | 'stripe' | 'paypal' | 'nexi'): boolean {
+    const space = typeof item.booking.space === 'string' ? null : item.booking.space;
+    const methods = space?.paymentMethods?.length ? space.paymentMethods : ['cash', 'stripe', 'paypal', 'nexi'];
+    return methods.includes(method);
   }
 }

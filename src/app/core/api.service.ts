@@ -7,6 +7,7 @@ import {
   BookingWithPayments,
   Course,
   CourseBooking,
+  ClientInviteResponse,
   PaginatedBookings,
   Payment,
   Space,
@@ -14,6 +15,7 @@ import {
   WalletSummary,
 } from './models';
 import { AuthService } from './auth.service';
+import { UserRole } from './user-role.enum';
 
 @Injectable({ providedIn: 'root' })
 export class ApiService {
@@ -84,10 +86,10 @@ export class ApiService {
     return this.http.get<Payment[]>(`${this.apiUrl}payments/by-booking/${bookingId}`, this.headers());
   }
 
-  markBookingPaid(bookingId: string, amount?: number) {
+  markBookingPaid(bookingId: string, amount?: number, method = 'manual') {
     const payload: { amount?: number; method: string; transactionId: string } = {
-      method: 'manual',
-      transactionId: `MANUAL-${Date.now()}`,
+      method,
+      transactionId: `${method.toUpperCase()}-${Date.now()}`,
     };
 
     if (amount && amount > 0) {
@@ -137,8 +139,8 @@ export class ApiService {
     return this.http.get<CourseBooking[]>(`${this.apiUrl}course-bookings`, { ...this.headers(), params });
   }
 
-  createCourseBooking(courseId: string, userId: string) {
-    return this.http.post<CourseBooking>(`${this.apiUrl}course-bookings`, { courseId, userId }, this.headers());
+  createCourseBooking(courseId: string, userId: string, discountCode?: string) {
+    return this.http.post<CourseBooking>(`${this.apiUrl}course-bookings`, { courseId, userId, discountCode }, this.headers());
   }
 
   removeCourseBooking(id: string) {
@@ -147,15 +149,19 @@ export class ApiService {
 
   searchClients(search: string) {
     const params = new HttpParams()
-      .set('role', 'cliente')
-      .set('excludeRole', 'admin')
+      .set('role', UserRole.Cliente)
+      .set('excludeRole', UserRole.Admin)
       .set('limit', '20')
       .set('search', search);
     return this.http.get<User[]>(`${this.apiUrl}users`, { ...this.headers(), params });
   }
 
   createClient(payload: Partial<User> & { password: string }) {
-    return this.http.post<User>(`${this.apiUrl}users`, { ...payload, role: 'cliente' }, this.headers());
+    return this.http.post<User>(`${this.apiUrl}users`, { ...payload, role: UserRole.Cliente }, this.headers());
+  }
+
+  inviteClient(payload: Partial<User>) {
+    return this.http.post<ClientInviteResponse>(`${this.apiUrl}users/invite-client`, payload, this.headers());
   }
 
   wallet() {
@@ -166,7 +172,15 @@ export class ApiService {
     return this.http.get<User>(`${this.apiUrl}users/me`, this.headers());
   }
 
-  updateProfile(payload: Partial<User> & { password?: string }) {
+  updateProfile(payload: Partial<User> & { password?: string; phoneOtp?: string }) {
     return this.http.put<User>(`${this.apiUrl}users/me`, payload, this.headers());
+  }
+
+  requestProfilePhoneOtp(phone: string) {
+    return this.http.post<{ requested: boolean; phone: string; expiresInMinutes: number; devPhoneOtp?: string }>(
+      `${this.apiUrl}users/me/request-phone-otp`,
+      { phone },
+      this.headers(),
+    );
   }
 }

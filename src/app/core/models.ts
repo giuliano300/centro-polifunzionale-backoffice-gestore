@@ -1,13 +1,37 @@
+import { UserRole } from './user-role.enum';
+
 export interface JwtPayload {
   sub?: string;
   userId?: string;
+  name?: string;
   email?: string;
-  role?: 'admin' | 'gestore' | 'cliente';
+  role?: UserRole;
   exp?: number;
 }
 
 export interface LoginResponse {
   access_token: string;
+}
+
+export interface ManagerRegistrationOtpResponse {
+  requested: boolean;
+  email: string;
+  phone: string;
+  expiresInMinutes: number;
+  devEmailOtp?: string;
+  devPhoneOtp?: string;
+}
+
+export interface ManagerRegistrationConfirmResponse {
+  registered: boolean;
+  user: User;
+}
+
+export interface ManagerPasswordResetLinkResponse {
+  sent: boolean;
+  email: string;
+  expiresInMinutes: number;
+  devResetUrl?: string;
 }
 
 export interface User {
@@ -16,7 +40,7 @@ export interface User {
   email?: string;
   phone?: string;
   taxCode?: string;
-  role?: string;
+  role?: UserRole;
 }
 
 export interface SpaceOpeningSlot {
@@ -24,6 +48,7 @@ export interface SpaceOpeningSlot {
   isOpen: boolean;
   openTime: string;
   closeTime: string;
+  maxConsecutiveTimeSlots?: number;
 }
 
 export interface Space {
@@ -38,6 +63,7 @@ export interface Space {
   maxConsecutiveTimeSlots?: number;
   workstationCount?: number;
   courseCreationAdvanceHours?: number;
+  paymentMethods?: Array<'cash' | 'stripe' | 'paypal' | 'nexi'>;
   openingHours?: SpaceOpeningSlot[];
   isAvailable: boolean;
 }
@@ -68,11 +94,15 @@ export interface Payment {
   transactionId?: string;
   provider?: 'manual' | 'stripe' | 'paypal' | 'nexi';
   checkoutUrl?: string;
+  originalAmount?: number;
+  discountAmount?: number;
+  discountCode?: string;
 }
 
 export interface BookingWithPayments {
   booking: Booking;
   payments: Payment[];
+  cancellationRefundAmount?: number;
 }
 
 export interface PaginatedBookings {
@@ -94,6 +124,8 @@ export interface BookingAvailability {
   date: string;
   rentalMode: 'time' | 'full_day';
   isOpen: boolean;
+  maxConsecutiveTimeSlots?: number;
+  closureReason?: string;
   slots: AvailabilitySlot[];
 }
 
@@ -121,7 +153,32 @@ export interface CourseBooking {
   totalAmount?: number;
   walletAmount?: number;
   externalAmount?: number;
+  originalAmount?: number;
+  discountAmount?: number;
+  discountCode?: string;
   paymentStatus: 'PENDING' | 'PAID' | 'FAILED' | 'FREE';
+}
+
+export interface ClientInviteResponse {
+  user: User;
+  completeUrl: string;
+  sent: boolean;
+}
+
+export interface ClientInviteDetails {
+  name: string;
+  email: string;
+  phone?: string;
+  taxCode?: string;
+  role?: UserRole;
+  expiresAt?: string | Date;
+}
+
+export interface ClientInvitePhoneOtpResponse {
+  requested: boolean;
+  phone: string;
+  expiresInMinutes: number;
+  devPhoneOtp?: string;
 }
 
 export interface WalletMovement {

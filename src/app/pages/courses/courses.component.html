@@ -31,25 +31,71 @@
     <div class="card card-pad">
       <div class="section-title">
         <h2>Prenotazioni pagate disponibili</h2>
+        <p>Scegli una prenotazione per creare il corso collegato.</p>
       </div>
-      <div class="mini-list">
+
+      <div class="available-booking-tools" *ngIf="paidBookings.length">
+        <div class="booking-search">
+          <i class="ri-search-line"></i>
+          <input
+            type="search"
+            placeholder="Cerca per spazio, data o orario"
+            [value]="bookingSearchTerm"
+            (input)="setBookingSearchTerm($event)">
+        </div>
+        <div class="booking-range-tabs">
+          <button mat-button type="button" [class.active]="bookingRangeFilter === 'future'" (click)="setBookingRangeFilter('future')">Future</button>
+          <button mat-button type="button" [class.active]="bookingRangeFilter === 'week'" (click)="setBookingRangeFilter('week')">7 giorni</button>
+          <button mat-button type="button" [class.active]="bookingRangeFilter === 'month'" (click)="setBookingRangeFilter('month')">30 giorni</button>
+          <button mat-button type="button" [class.active]="bookingRangeFilter === 'all'" (click)="setBookingRangeFilter('all')">Tutte</button>
+        </div>
+      </div>
+
+      <div class="available-booking-count" *ngIf="paidBookings.length">
+        <strong>{{ visiblePaidBookings().length }}</strong>
+        <span>prenotazioni disponibili</span>
+      </div>
+
+      <div class="empty-courses compact" *ngIf="!paidBookings.length || !visiblePaidBookings().length">
+        <i class="ri-calendar-check-line"></i>
+        <strong>{{ paidBookings.length ? 'Nessun risultato' : 'Nessuna prenotazione disponibile' }}</strong>
+        <span>{{ paidBookings.length ? 'Modifica ricerca o periodo selezionato.' : 'Puoi creare corsi solo da prenotazioni pagate e future.' }}</span>
+      </div>
+
+      <div class="mini-list" *ngIf="visiblePaidBookings().length">
         <button
           mat-button
           class="booking-pick action-filter"
-          *ngFor="let booking of paidBookings"
+          *ngFor="let booking of displayedPaidBookings()"
           [class.booking-used]="hasCourseForBooking(booking._id) || !canSelectBookingForCourse(booking)"
           [disabled]="hasCourseForBooking(booking._id) || !canSelectBookingForCourse(booking)"
           (click)="useBooking(booking)">
-          <i class="ri-calendar-check-line"></i>
-          <span>
-            {{ bookingName(booking) }}
-            <small *ngIf="hasCourseForBooking(booking._id)">Corso gia creato</small>
-            <small *ngIf="!hasCourseForBooking(booking._id) && !canSelectBookingForCourse(booking)">
-              {{ courseCreationWindowMessage(booking) }}
-            </small>
+          <span class="booking-pick-content">
+            <i class="ri-calendar-check-line"></i>
+            <span class="booking-pick-text">
+              <strong>{{ bookingName(booking) }}</strong>
+              <small *ngIf="hasCourseForBooking(booking._id)">Corso gia creato</small>
+              <small *ngIf="!hasCourseForBooking(booking._id) && !canSelectBookingForCourse(booking)">
+                {{ courseCreationWindowMessage(booking) }}
+              </small>
+            </span>
+            <span class="booking-pick-action" *ngIf="!hasCourseForBooking(booking._id) && canSelectBookingForCourse(booking)">
+              Crea corso
+            </span>
           </span>
         </button>
       </div>
+
+      <button
+        mat-button
+        type="button"
+        class="action-filter show-more-bookings"
+        *ngIf="visiblePaidBookings().length > 6"
+        (click)="toggleAvailableBookings()">
+        <i [class]="showAllAvailableBookings ? 'ri-arrow-up-s-line' : 'ri-arrow-down-s-line'"></i>
+        <span>{{ showAllAvailableBookings ? 'Mostra meno' : 'Mostra tutte' }}</span>
+        <small *ngIf="!showAllAvailableBookings">+{{ hiddenPaidBookingsCount() }}</small>
+      </button>
     </div>
 
     <div class="card card-pad">
@@ -165,6 +211,7 @@
   <section class="card card-pad created-courses" *ngIf="!isLoading && hasBookedSpaces">
     <div class="section-title">
       <h2>Corsi creati</h2>
+      <p>Ordinati per data corso, dal più recente al meno recente.</p>
     </div>
 
     <div class="empty-courses" *ngIf="!courses.length">
@@ -174,21 +221,27 @@
     </div>
 
     <div class="course-list" *ngIf="courses.length">
-      <mat-card *ngFor="let course of courses" class="course-card">
+      <mat-card *ngFor="let course of displayedCourses()" class="course-card">
         <mat-card-content>
           <div class="course-main">
             <div>
               <h2>{{ course.title }}</h2>
               <p>{{ courseSpace(course) }} - {{ formatDate(course.date) }} - {{ course.startTime }} / {{ course.endTime }}</p>
             </div>
-            <span class="pill" [class]="course.enrollmentType === 'free' ? 'FREE' : 'pending'">
-              {{ course.enrollmentType === 'free' ? 'Gratuito' : formatCurrency(course.price) }}
-            </span>
+            <div class="course-card-stats">
+              <span class="course-enrollment-count">
+                <i class="ri-user-line"></i>
+                {{ courseSubscriberCount(course) }} / {{ course.capacity }}
+              </span>
+              <span class="pill" [class]="course.enrollmentType === 'free' ? 'FREE' : 'pending'">
+                {{ course.enrollmentType === 'free' ? 'Gratuito' : formatCurrency(course.price) }}
+              </span>
+            </div>
           </div>
           <div class="actions">
-            <button mat-button class="action-filter" (click)="editCourse(course)">
+            <button mat-button class="action-filter" (click)="openSubscribersModal(course)">
               <i class="ri-edit-line"></i>
-              <span>Modifica / iscritti</span>
+              <span>Visualizza / modifica iscritti</span>
             </button>
             <button mat-button class="action-delete" (click)="askDeleteCourse(course)">
               <i class="ri-delete-bin-line"></i>
@@ -198,15 +251,62 @@
         </mat-card-content>
       </mat-card>
     </div>
+
+    <div class="created-courses-pagination" *ngIf="courses.length">
+      <div>
+        <strong>{{ coursesPageStart() }}-{{ coursesPageEnd() }}</strong>
+        <span>di {{ courses.length }} corsi</span>
+      </div>
+      <div class="created-courses-pagination-actions">
+        <button mat-button class="action-filter" type="button" [disabled]="coursesPage <= 1" (click)="previousCoursesPage()">
+          <i class="ri-arrow-left-s-line"></i>
+          <span>Precedente</span>
+        </button>
+        <span>Pagina {{ coursesPage }} di {{ coursesTotalPages() }}</span>
+        <button mat-button class="action-filter" type="button" [disabled]="coursesPage >= coursesTotalPages()" (click)="nextCoursesPage()">
+          <span>Successiva</span>
+          <i class="ri-arrow-right-s-line"></i>
+        </button>
+      </div>
+    </div>
   </section>
 
-  <section *ngIf="hasBookedSpaces && selectedCourse" class="card card-pad subscribers">
-    <div class="section-title subscribers-head">
-      <h2>Iscritti a {{ selectedCourse.title }}</h2>
-      <button mat-button class="action-primary" type="button" (click)="toggleSubscriberForm()">
-        <i [class]="isSubscriberFormOpen ? 'ri-close-line' : 'ri-user-add-line'"></i>
-        <span>{{ isSubscriberFormOpen ? 'Chiudi inserimento' : 'Aggiungi iscritto' }}</span>
-      </button>
+  <div class="subscribers-modal-backdrop" *ngIf="isSubscribersModalOpen && selectedCourse" (click)="closeSubscribersModal()">
+    <section class="subscribers-modal subscribers" (click)="$event.stopPropagation()">
+      <div class="section-title subscribers-head">
+        <div>
+          <h2>Iscritti a {{ selectedCourse.title }}</h2>
+          <p>{{ courseSubscriberCount(selectedCourse) }} iscritti su {{ selectedCourse.capacity }} disponibili</p>
+        </div>
+        <div class="subscribers-head-actions">
+          <button mat-button class="action-primary" type="button" (click)="toggleSubscriberForm()">
+            <i [class]="isSubscriberFormOpen ? 'ri-close-line' : 'ri-user-add-line'"></i>
+            <span>{{ isSubscriberFormOpen ? 'Chiudi inserimento' : 'Aggiungi iscritto' }}</span>
+          </button>
+          <button mat-button class="action-cancel modal-close-button" type="button" (click)="closeSubscribersModal()">
+            <i class="ri-close-line"></i>
+            <span>Chiudi</span>
+          </button>
+        </div>
+      </div>
+
+    <div class="subscriber-course-summary">
+      <div>
+        <span>Spazio</span>
+        <strong>{{ courseSpace(selectedCourse) }}</strong>
+      </div>
+      <div>
+        <span>Data</span>
+        <strong>{{ formatDate(selectedCourse.date) }}</strong>
+      </div>
+      <div>
+        <span>Orario</span>
+        <strong>{{ selectedCourse.startTime }} / {{ selectedCourse.endTime }}</strong>
+      </div>
+      <div>
+        <span>Iscrizione</span>
+        <strong>{{ selectedCourse.enrollmentType === 'free' ? 'Gratuita' : formatCurrency(selectedCourse.price) }}</strong>
+      </div>
     </div>
 
     <div class="subscriber-list" *ngIf="subscribers.length; else noSubscribers">
@@ -217,7 +317,7 @@
           <small *ngIf="totalSubscriberAmount(item) > 0">
             Totale {{ formatCurrency(totalSubscriberAmount(item)) }}
             <ng-container *ngIf="walletSubscriberAmount(item) > 0">
-              · Wallet {{ formatCurrency(walletSubscriberAmount(item)) }} · Esterno {{ formatCurrency(externalSubscriberAmount(item)) }}
+              · Wallet {{ formatCurrency(walletSubscriberAmount(item)) }} · {{ subscriberPaymentMethodLabel(item) }} {{ formatCurrency(externalSubscriberAmount(item)) }}
             </ng-container>
           </small>
         </div>
@@ -288,6 +388,10 @@
               <input matInput formControlName="taxCode">
             </mat-form-field>
           </div>
+          <mat-form-field appearance="outline">
+            <mat-label>Codice sconto</mat-label>
+            <input matInput formControlName="discountCode" placeholder="Opzionale">
+          </mat-form-field>
         </div>
       </div>
 
@@ -302,7 +406,8 @@
         </button>
       </div>
     </form>
-  </section>
+    </section>
+  </div>
 
   <div class="confirm-backdrop" *ngIf="pendingDelete" (click)="cancelDelete()">
     <div class="confirm-dialog" (click)="$event.stopPropagation()">

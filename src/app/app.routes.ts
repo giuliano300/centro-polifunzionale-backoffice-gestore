@@ -7,9 +7,11 @@ import { BookingsComponent } from './pages/bookings/bookings.component';
 import { CoursesComponent } from './pages/courses/courses.component';
 import { WalletComponent } from './pages/wallet/wallet.component';
 import { ProfileComponent } from './pages/profile/profile.component';
+import { CompleteRegistrationComponent } from './pages/complete-registration/complete-registration.component';
 
 export const routes: Routes = [
   { path: 'login', component: LoginComponent },
+  { path: 'complete-registration', component: CompleteRegistrationComponent },
   { path: '', canActivate: [authGuard], component: DashboardComponent },
   { path: 'spaces', canActivate: [authGuard], component: SpacesComponent },
   { path: 'bookings', canActivate: [authGuard], component: BookingsComponent },

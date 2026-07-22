@@ -1,0 +1,62 @@
+<main class="complete-page">
+  <mat-card class="complete-card">
+    <mat-card-content>
+      <img src="/images/logo.svg" alt="N'Agorà">
+      <h1>Completa la registrazione</h1>
+      <p>Controlla i dati dell'invito, scegli la password e accetta il trattamento dati per attivare l'account.</p>
+
+      <div *ngIf="message" class="message" [class.success]="completed">{{ message }}</div>
+
+      <form *ngIf="!completed" [formGroup]="form">
+        <mat-form-field appearance="outline">
+          <mat-label>Nome e cognome</mat-label>
+          <input matInput formControlName="name">
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Email</mat-label>
+          <input matInput formControlName="email">
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Cellulare</mat-label>
+          <input matInput formControlName="phone">
+        </mat-form-field>
+        <button mat-button class="action-filter otp-button" type="button" [disabled]="isSendingOtp || form.controls.phone.invalid || !token" (click)="requestPhoneOtp()">
+          <i class="ri-smartphone-line"></i>
+          <span>{{ isSendingOtp ? 'Invio OTP...' : 'Invia OTP cellulare' }}</span>
+        </button>
+        <div class="otp-dev-box" *ngIf="devPhoneOtp">
+          <strong>OTP cellulare sviluppo</strong>
+          <span>{{ devPhoneOtp }}</span>
+        </div>
+        <mat-form-field appearance="outline">
+          <mat-label>OTP cellulare</mat-label>
+          <input matInput formControlName="phoneOtp" maxlength="6" autocomplete="one-time-code">
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Codice fiscale</mat-label>
+          <input matInput formControlName="taxCode">
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Password</mat-label>
+          <input matInput type="password" formControlName="password">
+        </mat-form-field>
+        <label class="privacy-option">
+          <input type="checkbox" formControlName="acceptedDataProcessing">
+          <span>Accetto il trattamento dei dati personali per completare la registrazione.</span>
+        </label>
+        <div class="validation-box" *ngIf="validationErrors().length">
+          <strong>Controlla i dati inseriti</strong>
+          <ul>
+            <li *ngFor="let error of validationErrors()">{{ error }}</li>
+          </ul>
+        </div>
+        <button mat-button class="action-primary" type="button" [disabled]="isSaving || isLoadingInvite || !token" (click)="complete()">
+          <i class="ri-check-line"></i>
+          <span>{{ isSaving ? 'Salvataggio...' : (isLoadingInvite ? 'Caricamento...' : 'Completa registrazione') }}</span>
+        </button>
+      </form>
+
+      <a *ngIf="completed" mat-button class="action-filter" routerLink="/login">Vai al login</a>
+    </mat-card-content>
+  </mat-card>
+</main>

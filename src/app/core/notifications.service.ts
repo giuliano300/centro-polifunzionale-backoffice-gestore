@@ -42,6 +42,11 @@ export class NotificationsService {
       this.notificationsSubject.next(this.sortRecentFirst([notification, ...current]).slice(0, 30));
       this.unreadSubject.next(this.unreadSubject.value + 1);
     });
+
+    this.socket.on('account-disabled', () => {
+      this.disconnect();
+      this.auth.logout();
+    });
   }
 
   disconnect(): void {
